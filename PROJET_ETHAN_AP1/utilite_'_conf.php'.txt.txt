@@ -1,0 +1,2 @@
+_conf.php est un fichier de configuration qui contient les variables de connexion à la BDD et permet d'éviter la duplication de code.
+Si il y a des modifications à faire liées à la BDD, il faudra seulement modifier ce fichier plûtôt que toutes les pages.
