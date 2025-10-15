@@ -1,14 +1,11 @@
 <?php
-include '_conf.php'; // Fichier de configuration qui contient les variables de connexion.
-?>
+session_start();
+include '_conf.php';
 
-<?php
-// Si la connexion est réussie :
+// Test de connexion à la base de données
 if ($bdd = mysqli_connect($serveurBDD, $userBDD, $mdpBDD, $nomBDD)) {
     echo "Connexion à la base de données réussie.<br>";
-}
-// Si la connexion échoue :
-else {
+} else {
     echo "Erreur de connexion à la base de données";
 }
 ?>
@@ -21,16 +18,18 @@ else {
 </head>
 <body>
     <h2>Connexion</h2>
-    <form action="traitement_connexion.php" method="POST">
-        <label for="identifiant">Identifiant :</label><br>
-        <input type="text" id="identifiant" name="identifiant" required><br><br>
+    <!-- Formulaire envoyé vers accueil.php qui gère l'authentification -->
+    <form action="accueil.php" method="POST">
+        <label for="login">Login :</label><br>
+        <input type="text" id="login" name="login" required><br><br>
 
-        <label for="mdp">Mot de passe :</label><br>
-        <input type="password" id="mdp" name="mdp" required><br><br>
+        <label for="motdepasse">Mot de passe :</label><br>
+        <input type="password" id="motdepasse" name="motdepasse" required><br><br>
 
-        <button type="submit">Se connecter</button>
+        <button type="submit" name="send_con">Se connecter</button>
     </form>
 
     <p><a href="sendmail.php">Mot de passe oublié ?</a></p>
+    <p><a href="inscription.php">Créer un compte</a></p>
 </body>
 </html>
