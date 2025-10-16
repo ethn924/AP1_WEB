@@ -41,11 +41,11 @@ if ($user_type == 0) { // Élève
     die('Accès non autorisé');
 }
 
-// Chemin du fichier
+// Chemin du fichier - CORRECTION ICI
 $chemin_fichier = $dossier_upload . $piece_jointe['donnees'];
 
 if (!file_exists($chemin_fichier)) {
-    die('Fichier non trouvé sur le serveur');
+    die('Fichier non trouvé sur le serveur: ' . $chemin_fichier);
 }
 
 // En-têtes pour le téléchargement

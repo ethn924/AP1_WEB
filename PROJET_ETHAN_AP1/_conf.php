@@ -38,8 +38,8 @@ function logger($message, $utilisateur_id = null, $page = null) {
     if ($bdd) {
         $message_escape = mysqli_real_escape_string($bdd, $message);
         $page_escape = mysqli_real_escape_string($bdd, $page);
-        $query = "INSERT INTO logs_erreurs (utilisateur_id, page, erreur, trace) 
-                  VALUES (" . ($utilisateur_id ?: 'NULL') . ", '$page_escape', '$message_escape', '')";
+        $query = "INSERT INTO logs_erreurs (utilisateur_id, page, erreur) 
+                  VALUES (" . ($utilisateur_id ?: 'NULL') . ", '$page_escape', '$message_escape')";
         @mysqli_query($bdd, $query);
     }
 }

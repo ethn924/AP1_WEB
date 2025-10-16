@@ -13,7 +13,6 @@ if (!$bdd) {
     die("Erreur connexion BDD");
 }
 
-// Fonction pour formater la date en français avec majuscules (sans heure)
 function formatDateFrench($date) {
     $english_months = array('January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December');
     $french_months = array('Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre');
@@ -28,7 +27,6 @@ function formatDateFrench($date) {
     return $date_str;
 }
 
-// Fonction pour formater la date et l'heure en français (pour les datetime)
 function formatDateTimeFrench($datetime) {
     $english_months = array('January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December');
     $french_months = array('Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre');
@@ -49,7 +47,6 @@ $error = '';
 $show_cr_form = false;
 $show_cr_list = false;
 
-// Vérifier si l'utilisateur a un stage et un tuteur associé
 $stage_query = "SELECT s.*, t.nom as tuteur_nom, t.prenom as tuteur_prenom, t.tel as tuteur_tel, t.email as tuteur_email 
                 FROM utilisateur u 
                 LEFT JOIN stage s ON u.num_stage = s.num 
@@ -58,7 +55,6 @@ $stage_query = "SELECT s.*, t.nom as tuteur_nom, t.prenom as tuteur_prenom, t.te
 $stage_result = mysqli_query($bdd, $stage_query);
 $stage_info = mysqli_fetch_assoc($stage_result);
 
-// Vérifier si tous les champs obligatoires sont remplis
 if ($stage_info && 
     !empty($stage_info['nom']) && 
     !empty($stage_info['adresse']) && 
@@ -77,64 +73,64 @@ if ($stage_info &&
 $date_cr = date('Y-m-d');
 $description = '';
 
-// Chargement des CR existants pour la date sélectionnée
 if (isset($_POST['show_cr'])) {
     $date_cr = $_POST['date_cr'];
     $show_cr_list = true;
 }
 
-// Masquer les CR
 if (isset($_POST['hide_cr'])) {
     $date_cr = $_POST['date_cr'];
     $show_cr_list = false;
 }
 
-// Création d'un nouveau CR (uniquement si les infos stage/tuteur sont complètes)
 if (isset($_POST['insérer']) && $show_cr_form) {
     $date_cr = $_POST['date_cr'];
     $description = mysqli_real_escape_string($bdd, $_POST['description']);
 
-    $insert_query = "INSERT INTO cr (date, description, vu, datetime, num_utilisateur) 
-                    VALUES ('$date_cr', '$description', 0, NOW(), $user_id)";
-    
-    if (mysqli_query($bdd, $insert_query)) {
-        $cr_id = mysqli_insert_id($bdd);
-        $message = "Nouveau compte rendu créé avec succès !";
-        $description = '';
+    $today = date('Y-m-d');
+    if ($date_cr != $today) {
+        $error = "Vous ne pouvez créer des comptes rendus que pour la date d'aujourd'hui (" . formatDateFrench($today) . ").";
+    } else {
+        $insert_query = "INSERT INTO cr (date, description, vu, datetime, num_utilisateur) 
+                        VALUES ('$date_cr', '$description', 0, NOW(), $user_id)";
         
-        // Gestion des pièces jointes
-        if (!empty($_FILES['pieces_jointes']['name'][0])) {
-            $upload_errors = [];
-            foreach ($_FILES['pieces_jointes']['tmp_name'] as $key => $tmp_name) {
-                if ($_FILES['pieces_jointes']['error'][$key] === UPLOAD_ERR_OK) {
-                    try {
-                        $fichier = [
-                            'name' => $_FILES['pieces_jointes']['name'][$key],
-                            'type' => $_FILES['pieces_jointes']['type'][$key],
-                            'tmp_name' => $tmp_name,
-                            'error' => $_FILES['pieces_jointes']['error'][$key],
-                            'size' => $_FILES['pieces_jointes']['size'][$key]
-                        ];
-                        sauvegarderFichier($fichier, $cr_id);
-                    } catch (Exception $e) {
-                        $upload_errors[] = $fichier['name'] . ': ' . $e->getMessage();
+        if (mysqli_query($bdd, $insert_query)) {
+            $cr_id = mysqli_insert_id($bdd);
+            $message = "Nouveau compte rendu créé avec succès !";
+            $description = '';
+            
+            if (!empty($_FILES['pieces_jointes']['name'][0])) {
+                $upload_errors = [];
+                foreach ($_FILES['pieces_jointes']['tmp_name'] as $key => $tmp_name) {
+                    if ($_FILES['pieces_jointes']['error'][$key] === UPLOAD_ERR_OK) {
+                        try {
+                            $fichier = [
+                                'name' => $_FILES['pieces_jointes']['name'][$key],
+                                'type' => $_FILES['pieces_jointes']['type'][$key],
+                                'tmp_name' => $tmp_name,
+                                'error' => $_FILES['pieces_jointes']['error'][$key],
+                                'size' => $_FILES['pieces_jointes']['size'][$key]
+                            ];
+                            sauvegarderFichier($fichier, $cr_id);
+                        } catch (Exception $e) {
+                            $upload_errors[] = $fichier['name'] . ': ' . $e->getMessage();
+                            logger("Erreur upload fichier: " . $e->getMessage(), $user_id, 'editer_cr.php');
+                        }
                     }
                 }
+                if (!empty($upload_errors)) {
+                    $message .= " Mais certaines pièces jointes n'ont pas pu être uploadées: " . implode(', ', $upload_errors);
+                }
             }
-            if (!empty($upload_errors)) {
-                $message .= " Mais certaines pièces jointes n'ont pas pu être uploadées: " . implode(', ', $upload_errors);
-            }
+            
+            $show_cr_list = true;
+        } else {
+            $error = "Erreur lors de la création : " . mysqli_error($bdd);
+            logger("Erreur création CR: " . mysqli_error($bdd), $user_id, 'editer_cr.php');
         }
-        
-        // Après insertion, on affiche les CR de cette date
-        $show_cr_list = true;
-    } else {
-        $error = "Erreur lors de la création : " . mysqli_error($bdd);
-        logger("Erreur création CR: " . mysqli_error($bdd), $user_id, 'editer_cr.php');
     }
 }
 
-// Récupération de tous les CR de l'utilisateur pour la date sélectionnée (seulement si on doit les afficher)
 $liste_cr_result = null;
 if ($show_cr_list) {
     $liste_cr_query = "SELECT * FROM cr WHERE num_utilisateur = $user_id AND date = '$date_cr' ORDER BY datetime DESC";
@@ -146,74 +142,116 @@ if ($show_cr_list) {
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Créer un compte rendu</title>
-    <style>
-        .error-message {
-            background-color: #ffe6e6;
-            border: 1px solid #ff9999;
-            padding: 15px;
-            margin: 15px 0;
-            border-radius: 5px;
+    <script>
+        // Types de fichiers autorisés
+        const typesAutorises = <?php echo json_encode($types_autorises); ?>;
+        const tailleMaxFichier = <?php echo $taille_max_fichier; ?>;
+        
+        function verifierFichiers() {
+            const input = document.getElementById('pieces_jointes');
+            const message = document.getElementById('message_validation_fichiers');
+            const boutonSubmit = document.querySelector('button[name="insérer"]');
+            let fichiersValides = true;
+            let messageTexte = '';
+            
+            if (input.files.length > 0) {
+                for (let i = 0; i < input.files.length; i++) {
+                    const fichier = input.files[i];
+                    
+                    // Vérification de la taille
+                    if (fichier.size > tailleMaxFichier) {
+                        fichiersValides = false;
+                        messageTexte += `❌ ${fichier.name} : Trop volumineux (max ${formatTaille(tailleMaxFichier)})<br>`;
+                        continue;
+                    }
+                    
+                    // Vérification du type MIME
+                    if (!typesAutorises.includes(fichier.type)) {
+                        fichiersValides = false;
+                        const extensions = getExtensionsFromMimeTypes();
+                        messageTexte += `❌ ${fichier.name} : Type non autorisé<br>`;
+                        messageTexte += `Types autorisés : ${extensions}<br>`;
+                    } else {
+                        messageTexte += `✅ ${fichier.name} : Type autorisé<br>`;
+                    }
+                }
+            } else {
+                messageTexte = 'Aucun fichier sélectionné';
+            }
+            
+            message.innerHTML = messageTexte;
+            
+            // Désactiver le bouton si fichiers invalides
+            if (!fichiersValides) {
+                message.style.color = 'red';
+                boutonSubmit.disabled = true;
+                boutonSubmit.style.backgroundColor = '#6c757d';
+                boutonSubmit.title = 'Corrigez les erreurs de fichiers avant de soumettre';
+            } else {
+                message.style.color = 'green';
+                boutonSubmit.disabled = false;
+                boutonSubmit.style.backgroundColor = '#28a745';
+                boutonSubmit.title = '';
+            }
         }
-        .stage-info {
-            background-color: #e6f7ff;
-            border: 1px solid #99ccff;
-            padding: 15px;
-            margin: 15px 0;
-            border-radius: 5px;
+        
+        function formatTaille(octets) {
+            const unites = ['o', 'Ko', 'Mo', 'Go'];
+            let puissance = 0;
+            
+            while (octets >= 1024 && puissance < unites.length - 1) {
+                octets /= 1024;
+                puissance++;
+            }
+            
+            return `${Math.round(octets * 100) / 100} ${unites[puissance]}`;
         }
-        .cr-list {
-            border: 1px solid #ddd;
-            padding: 15px;
-            margin: 15px 0;
-            border-radius: 5px;
-            background-color: #f9f9f9;
+        
+        function getExtensionsFromMimeTypes() {
+            const extensions = {
+                'image/jpeg': 'JPG, JPEG',
+                'image/png': 'PNG',
+                'image/gif': 'GIF',
+                'application/pdf': 'PDF',
+                'application/msword': 'DOC',
+                'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'DOCX'
+            };
+            
+            return Object.values(extensions).join(', ');
         }
-        .button-group {
-            margin: 10px 0;
-        }
-        .button-group button {
-            margin-right: 10px;
-            padding: 8px 15px;
-            cursor: pointer;
-        }
-        .piece-jointe {
-            background: #f0f0f0;
-            padding: 5px 10px;
-            margin: 5px 0;
-            border-radius: 3px;
-            display: inline-block;
-        }
-        .commentaires {
-            background: #f9f9f9;
-            padding: 10px;
-            margin: 10px 0;
-            border-left: 3px solid #007bff;
-        }
-        .commentaire {
-            background: white;
-            padding: 8px;
-            margin: 5px 0;
-            border-radius: 3px;
-        }
-    </style>
+        
+        // Vérifier les fichiers au chargement de la page si des fichiers sont déjà sélectionnés
+        document.addEventListener('DOMContentLoaded', function() {
+            const input = document.getElementById('pieces_jointes');
+            if (input.files.length > 0) {
+                verifierFichiers();
+            }
+        });
+    </script>
 </head>
 <body>
-    <h2>Créer un compte rendu</h2>
+    <h1>Créer un compte rendu</h1>
+    <p><a href="accueil.php">← Retour à l'accueil</a></p>
 
     <?php if ($message): ?>
-        <p style="color:green"><?php echo $message; ?></p>
+        <div style="background: #d4edda; color: #155724; padding: 12px; margin-bottom: 20px; border-radius: 4px; border-left: 4px solid #28a745;">
+            ✅ <?php echo $message; ?>
+        </div>
     <?php endif; ?>
 
     <?php if ($error): ?>
-        <p style="color:red"><?php echo $error; ?></p>
+        <div style="background: #f8d7da; color: #721c24; padding: 12px; margin-bottom: 20px; border-radius: 4px; border-left: 4px solid #dc3545;">
+            ❌ <?php echo $error; ?>
+        </div>
     <?php endif; ?>
 
     <?php if (!$show_cr_form): ?>
-        <div class="error-message">
-            <h3>❌ Informations manquantes</h3>
-            <p>Avant de pouvoir créer un compte rendu, vous devez compléter vos informations de stage et de tuteur.</p>
-            <p>Veuillez remplir tous les champs suivants :</p>
+        <div style="background: #fff3cd; border: 1px solid #ffc107; padding: 15px; margin-bottom: 20px; border-radius: 4px; border-left: 4px solid #ffc107;">
+            <h3>⚠️ Informations manquantes</h3>
+            <p>Avant de créer un compte rendu, vous devez compléter vos informations de stage et de tuteur.</p>
+            <p>Champs manquants :</p>
             <ul>
                 <?php if (!$stage_info || empty($stage_info['nom'])) echo "<li>Nom de l'entreprise</li>"; ?>
                 <?php if (!$stage_info || empty($stage_info['adresse'])) echo "<li>Adresse du stage</li>"; ?>
@@ -227,98 +265,121 @@ if ($show_cr_list) {
                 <?php if (!$stage_info || empty($stage_info['tuteur_tel'])) echo "<li>Téléphone du tuteur</li>"; ?>
                 <?php if (!$stage_info || empty($stage_info['tuteur_email'])) echo "<li>Email du tuteur</li>"; ?>
             </ul>
-            <p><a href="mon_stage.php" style="font-weight: bold; color: #0066cc;">➡ Remplir mes informations de stage</a></p>
+            <p><a href="mon_stage.php" style="background: #ffc107; color: #333; padding: 10px 20px; text-decoration: none; border-radius: 4px; display: inline-block; font-weight: bold; margin-top: 10px;">
+                ➜ Remplir mes informations de stage
+            </a></p>
         </div>
     <?php else: ?>
-        <div class="stage-info">
+        <div style="background: #d4edda; border: 1px solid #28a745; padding: 15px; margin-bottom: 20px; border-radius: 4px;">
             <h3>✅ Vos informations de stage sont complètes</h3>
             <p><strong>Entreprise :</strong> <?php echo htmlspecialchars($stage_info['nom']); ?></p>
             <p><strong>Tuteur :</strong> <?php echo htmlspecialchars($stage_info['tuteur_prenom'] . ' ' . $stage_info['tuteur_nom']); ?></p>
-            <p><a href="mon_stage.php">Modifier mes informations de stage</a></p>
+            <p><a href="mon_stage.php">Modifier mes informations</a></p>
         </div>
 
-        <!-- Formulaire pour sélectionner une date -->
-        <form method="POST">
-            <label for="date_cr">Date :</label><br>
-            <input type="date" id="date_cr" name="date_cr" value="<?php echo $date_cr; ?>" required>
-            
-            <div class="button-group">
+        <div style="background: #f8f9fa; padding: 15px; margin-bottom: 20px; border-radius: 4px; border: 1px solid #dee2e6;">
+            <h2>Mes comptes rendus</h2>
+            <form method="POST" style="margin-bottom: 15px;">
+                <label for="date_cr">Sélectionner une date :</label>
+                <input type="date" id="date_cr" name="date_cr" value="<?php echo $date_cr; ?>" required style="padding: 8px; margin: 10px 0; margin-right: 10px;">
+                
                 <?php if (!$show_cr_list): ?>
-                    <button type="submit" name="show_cr">Voir les comptes rendus de ce jour</button>
+                    <button type="submit" name="show_cr" style="background: #007bff; color: white; padding: 8px 15px; border: none; border-radius: 4px; cursor: pointer;">
+                        📋 Voir les CR de ce jour
+                    </button>
                 <?php else: ?>
-                    <button type="submit" name="hide_cr">Masquer les comptes rendus</button>
+                    <button type="submit" name="hide_cr" style="background: #6c757d; color: white; padding: 8px 15px; border: none; border-radius: 4px; cursor: pointer;">
+                        ✕ Masquer
+                    </button>
                 <?php endif; ?>
-            </div>
-        </form>
+            </form>
+        </div>
 
-        <br>
-
-        <!-- Affichage des CR existants pour cette date (uniquement si demandé) -->
-        <?php if ($show_cr_list): ?>
-            <div class="cr-list">
+        <?php if ($show_cr_list && $liste_cr_result): ?>
+            <div style="background: #f8f9fa; padding: 15px; margin-bottom: 20px; border-radius: 4px; border: 1px solid #dee2e6;">
                 <?php if (mysqli_num_rows($liste_cr_result) > 0): ?>
-                    <h3>Comptes rendus existants pour le <?php echo formatDateFrench($date_cr); ?> :</h3>
+                    <h3>Comptes rendus du <?php echo formatDateFrench($date_cr); ?></h3>
+                    
                     <?php while ($cr = mysqli_fetch_assoc($liste_cr_result)): ?>
-                        <div style="border: 1px solid #ccc; padding: 10px; margin: 10px 0;">
-                            <p><strong>Créé le :</strong> <?php echo formatDateTimeFrench($cr['datetime']); ?></p>
-                            <p><strong>Description :</strong><br><?php echo nl2br(htmlspecialchars($cr['description'])); ?></p>
+                        <div style="background: white; border: 1px solid #e0e0e0; padding: 15px; margin: 12px 0; border-radius: 4px;">
+                            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 10px;">
+                                <div>
+                                    <p><strong>Créé le :</strong> <?php echo formatDateTimeFrench($cr['datetime']); ?></p>
+                                    <p><strong>Statut :</strong> <?php echo $cr['vu'] == 1 ? "✅ Consulté" : "❌ Non consulté"; ?></p>
+                                </div>
+                            </div>
                             
-                            <!-- Affichage des pièces jointes -->
+                            <p><strong>Description :</strong></p>
+                            <p style="white-space: pre-wrap; line-height: 1.5; background: #f8f9fa; padding: 10px; border-radius: 4px; margin: 10px 0;">
+                                <?php echo htmlspecialchars($cr['description']); ?>
+                            </p>
+                            
                             <?php 
                             $pieces_jointes = getPiecesJointes($cr['num']);
                             if (!empty($pieces_jointes)): ?>
-                                <p><strong>Pièces jointes :</strong></p>
+                                <p><strong>📎 Pièces jointes :</strong></p>
                                 <?php foreach ($pieces_jointes as $piece): ?>
-                                    <div class="piece-jointe">
-                                        <a href="telecharger.php?id=<?php echo $piece['id']; ?>" target="_blank">
-                                            📎 <?php echo htmlspecialchars($piece['nom_fichier']); ?>
+                                    <div style="background: #f0f0f0; padding: 8px; margin: 5px 0; border-radius: 4px; display: flex; justify-content: space-between; align-items: center;">
+                                        <span>📄 <?php echo htmlspecialchars($piece['nom_fichier']); ?> (<?php echo formaterTailleFichier($piece['taille']); ?>)</span>
+                                        <a href="telecharger.php?id=<?php echo $piece['id']; ?>" target="_blank" style="background: #007bff; color: white; padding: 5px 10px; text-decoration: none; border-radius: 4px; font-size: 12px;">
+                                            ⬇️ Télécharger
                                         </a>
-                                        (<?php echo formaterTailleFichier($piece['taille']); ?>)
                                     </div>
                                 <?php endforeach; ?>
                             <?php endif; ?>
                             
-                            <!-- Affichage des commentaires -->
                             <?php 
                             $commentaires = getCommentaires($cr['num']);
                             if (!empty($commentaires)): ?>
-                                <div class="commentaires">
-                                    <strong>Commentaires des professeurs :</strong>
-                                    <?php foreach ($commentaires as $commentaire): ?>
-                                        <div class="commentaire">
+                                <p style="margin-top: 15px;"><strong>💬 Commentaires (<?php echo count($commentaires); ?>) :</strong></p>
+                                <?php foreach ($commentaires as $commentaire): ?>
+                                    <div style="background: #e7f3ff; padding: 10px; margin: 8px 0; border-left: 3px solid #007bff; border-radius: 4px;">
+                                        <p style="margin: 0 0 5px 0;">
                                             <strong><?php echo htmlspecialchars($commentaire['prenom'] . ' ' . $commentaire['nom']); ?></strong>
-                                            (<?php echo formatDateTimeFrench($commentaire['date_creation']); ?>):<br>
-                                            <?php echo nl2br(htmlspecialchars($commentaire['commentaire'])); ?>
-                                        </div>
-                                    <?php endforeach; ?>
-                                </div>
+                                            <span style="color: #999; font-size: 12px;">– <?php echo formatDateTimeFrench($commentaire['date_creation']); ?></span>
+                                        </p>
+                                        <p style="margin: 0; white-space: pre-wrap; line-height: 1.4;">
+                                            <?php echo htmlspecialchars($commentaire['commentaire']); ?>
+                                        </p>
+                                    </div>
+                                <?php endforeach; ?>
                             <?php endif; ?>
                         </div>
                     <?php endwhile; ?>
                 <?php else: ?>
-                    <p>Aucun compte rendu pour le <?php echo formatDateFrench($date_cr); ?>.</p>
+                    <p style="color: #999; font-style: italic;">Aucun compte rendu pour le <?php echo formatDateFrench($date_cr); ?>.</p>
                 <?php endif; ?>
             </div>
         <?php endif; ?>
 
-        <br>
+        <div style="background: #f8f9fa; padding: 15px; border-radius: 4px; border: 1px solid #dee2e6;">
+            <h2>Créer un nouveau compte rendu</h2>
+            
+            <div style="background: #d1ecf1; color: #0c5460; padding: 12px; margin-bottom: 15px; border-radius: 4px; border-left: 4px solid #17a2b8;">
+                <strong>ℹ️ Information :</strong> Vous ne pouvez créer des comptes rendus que pour la date d'aujourd'hui (<?php echo formatDateFrench(date('Y-m-d')); ?>).
+            </div>
+            
+            <form method="POST" enctype="multipart/form-data">
+                <input type="hidden" name="date_cr" value="<?php echo date('Y-m-d'); ?>">
+                <input type="date" id="date_cr_display" value="<?php echo date('Y-m-d'); ?>" disabled style="padding: 8px; margin: 8px 0; border: 1px solid #ddd; border-radius: 4px; background-color: #f8f9fa;">
+                <span style="color: #666; font-style: italic;">(Date d'aujourd'hui - non modifiable)</span><br><br>
 
-        <!-- Formulaire pour créer un nouveau CR -->
-        <h3>Créer un nouveau compte rendu :</h3>
-        <form method="POST" enctype="multipart/form-data">
-            <input type="hidden" name="date_cr" value="<?php echo $date_cr; ?>">
+                <label for="description">Descriptif <span style="color: red;">*</span></label><br>
+                <textarea id="description" name="description" rows="10" style="width: 100%; padding: 8px; margin: 8px 0; border: 1px solid #ddd; border-radius: 4px; font-family: Arial, sans-serif;" required><?php echo htmlspecialchars($description); ?></textarea><br><br>
 
-            <label for="description">Descriptif :</label><br>
-            <textarea id="description" name="description" rows="10" cols="50" required><?php echo $description; ?></textarea><br><br>
+                <label for="pieces_jointes">Pièces jointes (max 10MB par fichier)</label><br>
+                <input type="file" id="pieces_jointes" name="pieces_jointes[]" multiple accept=".jpg,.jpeg,.png,.gif,.pdf,.doc,.docx" 
+                       onchange="verifierFichiers()" style="margin: 8px 0;">
+                
+                <div id="message_validation_fichiers" style="font-size: 14px; margin: 10px 0; padding: 10px; border-radius: 4px; background: #f8f9fa;"></div>
+                
+                <p style="font-size: 12px; color: #666;">Types autorisés : JPG, PNG, GIF, PDF, DOC, DOCX</p><br>
 
-            <label for="pieces_jointes">Pièces jointes (max 10MB par fichier) :</label><br>
-            <input type="file" id="pieces_jointes" name="pieces_jointes[]" multiple accept=".jpg,.jpeg,.png,.gif,.pdf,.doc,.docx"><br>
-            <small>Types autorisés: JPG, PNG, GIF, PDF, DOC, DOCX</small><br><br>
-
-            <button type="submit" name="insérer">Créer un nouveau CR</button>
-        </form>
+                <button type="submit" name="insérer" style="background: #28a745; color: white; padding: 12px 24px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 14px;">
+                    ✅ Créer le compte rendu
+                </button>
+            </form>
+        </div>
     <?php endif; ?>
-
-    <p><a href="accueil.php">Retour à l'accueil</a></p>
 </body>
 </html>

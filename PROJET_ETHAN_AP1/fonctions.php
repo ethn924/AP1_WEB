@@ -21,11 +21,16 @@ function validerEmail($email) {
 function creerNotification($utilisateur_id, $type, $titre, $message, $lien = null) {
     global $bdd;
     
+    // Vérifier que $bdd est disponible
+    if (!$bdd) {
+        return false;
+    }
+    
     $utilisateur_id = intval($utilisateur_id);
     $type = mysqli_real_escape_string($bdd, $type);
     $titre = mysqli_real_escape_string($bdd, $titre);
     $message = mysqli_real_escape_string($bdd, $message);
-    $lien = $lien ? mysqli_real_escape_string($bdd, $lien) : 'NULL';
+    $lien = $lien ? "'" . mysqli_real_escape_string($bdd, $lien) . "'" : 'NULL';
     
     $query = "INSERT INTO notifications (utilisateur_id, type, titre, message, lien) 
               VALUES ($utilisateur_id, '$type', '$titre', '$message', $lien)";
@@ -38,6 +43,11 @@ function creerNotification($utilisateur_id, $type, $titre, $message, $lien = nul
  */
 function getNotificationsNonLues($utilisateur_id) {
     global $bdd;
+    
+    // Vérifier que $bdd est disponible
+    if (!$bdd) {
+        return array();
+    }
     
     $utilisateur_id = intval($utilisateur_id);
     $query = "SELECT * FROM notifications 
@@ -61,6 +71,11 @@ function getNotificationsNonLues($utilisateur_id) {
 function marquerNotificationLue($notification_id) {
     global $bdd;
     
+    // Vérifier que $bdd est disponible
+    if (!$bdd) {
+        return false;
+    }
+    
     $notification_id = intval($notification_id);
     $query = "UPDATE notifications SET lue = 1 WHERE id = $notification_id";
     
@@ -81,10 +96,29 @@ function formaterTailleFichier($octets) {
 }
 
 /**
+ * Détecte le type MIME d'un fichier
+ */
+function detecterTypeMime($chemin_fichier) {
+    $finfo = finfo_open(FILEINFO_MIME_TYPE);
+    $mime_type = finfo_file($finfo, $chemin_fichier);
+    finfo_close($finfo);
+    
+    if ($mime_type === false) {
+        $mime_type = 'application/octet-stream';
+    }
+    
+    return $mime_type;
+}
+
+/**
  * Sauvegarde un fichier uploadé
  */
 function sauvegarderFichier($fichier, $cr_id) {
     global $bdd, $dossier_upload, $taille_max_fichier, $types_autorises;
+    
+    if (!$bdd) {
+        throw new Exception("Connexion à la base de données non disponible");
+    }
     
     if ($fichier['error'] !== UPLOAD_ERR_OK) {
         throw new Exception("Erreur lors de l'upload: " . $fichier['error']);
@@ -94,15 +128,20 @@ function sauvegarderFichier($fichier, $cr_id) {
         throw new Exception("Fichier trop volumineux");
     }
     
-    $type_mime = mime_content_type($fichier['tmp_name']);
+    $type_mime = detecterTypeMime($fichier['tmp_name']);
     if (!in_array($type_mime, $types_autorises)) {
-        throw new Exception("Type de fichier non autorisé");
+        throw new Exception("Type de fichier non autorisé: " . $type_mime);
     }
     
     // Générer un nom de fichier unique
     $extension = pathinfo($fichier['name'], PATHINFO_EXTENSION);
-    $nom_fichier = uniqid() . '_' . preg_replace('/[^a-zA-Z0-9\._-]/', '_', $fichier['name']);
-    $chemin_complet = $dossier_upload . $nom_fichier;
+    $nom_fichier_unique = uniqid() . '_' . preg_replace('/[^a-zA-Z0-9\._-]/', '_', $fichier['name']);
+    $chemin_complet = $dossier_upload . $nom_fichier_unique;
+    
+    // Créer le dossier s'il n'existe pas
+    if (!is_dir($dossier_upload)) {
+        mkdir($dossier_upload, 0755, true);
+    }
     
     if (!move_uploaded_file($fichier['tmp_name'], $chemin_complet)) {
         throw new Exception("Erreur lors du déplacement du fichier");
@@ -113,14 +152,17 @@ function sauvegarderFichier($fichier, $cr_id) {
     $nom_fichier_escape = mysqli_real_escape_string($bdd, $fichier['name']);
     $type_mime_escape = mysqli_real_escape_string($bdd, $type_mime);
     $taille = intval($fichier['size']);
-    $chemin_escape = mysqli_real_escape_string($bdd, $nom_fichier);
+    $chemin_escape = mysqli_real_escape_string($bdd, $nom_fichier_unique);
     
     $query = "INSERT INTO pieces_jointes (cr_id, nom_fichier, type_mime, taille, donnees) 
               VALUES ($cr_id, '$nom_fichier_escape', '$type_mime_escape', $taille, '$chemin_escape')";
     
     if (!mysqli_query($bdd, $query)) {
-        unlink($chemin_complet); // Supprimer le fichier en cas d'erreur
-        throw new Exception("Erreur lors de la sauvegarde en base de données");
+        // Supprimer le fichier en cas d'erreur
+        if (file_exists($chemin_complet)) {
+            unlink($chemin_complet);
+        }
+        throw new Exception("Erreur lors de la sauvegarde en base de données: " . mysqli_error($bdd));
     }
     
     return mysqli_insert_id($bdd);
@@ -131,6 +173,11 @@ function sauvegarderFichier($fichier, $cr_id) {
  */
 function getPiecesJointes($cr_id) {
     global $bdd;
+    
+    // Vérifier que $bdd est disponible
+    if (!$bdd) {
+        return array();
+    }
     
     $cr_id = intval($cr_id);
     $query = "SELECT * FROM pieces_jointes WHERE cr_id = $cr_id ORDER BY date_upload DESC";
@@ -150,6 +197,11 @@ function getPiecesJointes($cr_id) {
  */
 function supprimerPieceJointe($piece_jointe_id) {
     global $bdd, $dossier_upload;
+    
+    // Vérifier que $bdd est disponible
+    if (!$bdd) {
+        return false;
+    }
     
     $piece_jointe_id = intval($piece_jointe_id);
     
@@ -179,6 +231,11 @@ function supprimerPieceJointe($piece_jointe_id) {
 function getCommentaires($cr_id) {
     global $bdd;
     
+    // Vérifier que $bdd est disponible
+    if (!$bdd) {
+        return array();
+    }
+    
     $cr_id = intval($cr_id);
     $query = "SELECT c.*, u.nom, u.prenom 
               FROM commentaires c 
@@ -202,6 +259,11 @@ function getCommentaires($cr_id) {
 function ajouterCommentaire($cr_id, $professeur_id, $commentaire) {
     global $bdd;
     
+    // Vérifier que $bdd est disponible
+    if (!$bdd) {
+        return false;
+    }
+    
     $cr_id = intval($cr_id);
     $professeur_id = intval($professeur_id);
     $commentaire_escape = mysqli_real_escape_string($bdd, $commentaire);
@@ -210,5 +272,13 @@ function ajouterCommentaire($cr_id, $professeur_id, $commentaire) {
               VALUES ($cr_id, $professeur_id, '$commentaire_escape')";
     
     return mysqli_query($bdd, $query);
+}
+
+/**
+ * Vérifie si une date est aujourd'hui
+ */
+function estDateAujourdhui($date) {
+    $today = date('Y-m-d');
+    return ($date == $today);
 }
 ?>

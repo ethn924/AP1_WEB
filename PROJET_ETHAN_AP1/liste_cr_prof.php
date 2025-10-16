@@ -3,9 +3,7 @@ session_start();
 include '_conf.php';
 include 'fonctions.php';
 
-// Fonction pour formater la date et l'heure en français avec majuscules
-function formatDateFrench($date)
-{
+function formatDateFrench($date) {
     $english_months = array('January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December');
     $french_months = array('Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre');
 
@@ -32,7 +30,6 @@ if (isset($_POST['update_vu'])) {
 
     $update_query = "UPDATE cr SET vu = $vu_value WHERE num = $cr_num";
     if (mysqli_query($bdd, $update_query)) {
-        // Créer une notification pour l'élève
         $cr_query = "SELECT num_utilisateur FROM cr WHERE num = $cr_num";
         $cr_result = mysqli_query($bdd, $cr_query);
         $cr_data = mysqli_fetch_assoc($cr_result);
@@ -41,20 +38,17 @@ if (isset($_POST['update_vu'])) {
             creerNotification(
                 $cr_data['num_utilisateur'],
                 'cr_vu',
-                'Compte rendu marqué comme vu',
-                'Votre compte rendu a été consulté par un professeur.',
-                'liste_cr.php'
+                'Votre compte rendu a été consulté',
+                'Un professeur a consulté et examiné votre compte rendu.',
+                'liste_cr.php?detail=' . $cr_num
             );
         }
         
-        // Reconstruction de l'URL pour la redirection
         $redirect_url = "liste_cr_prof.php";
         $params = array();
         
         if (isset($_GET['sort'])) $params[] = 'sort=' . $_GET['sort'];
         if (isset($_GET['eleve'])) $params[] = 'eleve=' . $_GET['eleve'];
-        if (isset($_GET['view'])) $params[] = 'view=' . $_GET['view'];
-        if (isset($_GET['view_stage'])) $params[] = 'view_stage=' . $_GET['view_stage'];
         if (isset($_GET['search'])) $params[] = 'search=' . urlencode($_GET['search']);
         
         if (!empty($params)) {
@@ -63,20 +57,18 @@ if (isset($_POST['update_vu'])) {
         
         header("Location: " . $redirect_url);
         exit();
-    } else {
-        $error = "Erreur lors de la mise à jour : " . mysqli_error($bdd);
-        logger("Erreur update_vu: " . mysqli_error($bdd), $_SESSION['Sid'], 'liste_cr_prof.php');
     }
 }
 
 // Traitement de l'ajout de commentaire
+$message_commentaire = '';
+$error_commentaire = '';
 if (isset($_POST['ajouter_commentaire'])) {
     $cr_num = intval($_POST['cr_num']);
     $commentaire = mysqli_real_escape_string($bdd, $_POST['commentaire']);
     $professeur_id = $_SESSION['Sid'];
     
     if (ajouterCommentaire($cr_num, $professeur_id, $commentaire)) {
-        // Créer une notification pour l'élève
         $cr_query = "SELECT num_utilisateur FROM cr WHERE num = $cr_num";
         $cr_result = mysqli_query($bdd, $cr_query);
         $cr_data = mysqli_fetch_assoc($cr_result);
@@ -85,14 +77,11 @@ if (isset($_POST['ajouter_commentaire'])) {
             $cr_data['num_utilisateur'],
             'commentaire',
             'Nouveau commentaire sur votre CR',
-            'Un professeur a ajouté un commentaire à votre compte rendu.',
-            'liste_cr.php'
+            'Un professeur a ajouté un commentaire sur votre compte rendu.',
+            'liste_cr.php?detail=' . $cr_num
         );
         
         $message_commentaire = "Commentaire ajouté avec succès !";
-    } else {
-        $error_commentaire = "Erreur lors de l'ajout du commentaire : " . mysqli_error($bdd);
-        logger("Erreur ajout commentaire: " . mysqli_error($bdd), $_SESSION['Sid'], 'liste_cr_prof.php');
     }
 }
 
@@ -105,21 +94,18 @@ $eleves_result = mysqli_query($bdd, $eleves_query);
 
 // Déterminer l'ordre de tri et les conditions WHERE
 $where_conditions = array();
-$order_by = "cr.datetime DESC"; // Tri par défaut
+$order_by = "cr.datetime DESC";
 
-// Filtre par élève spécifique
 if (isset($_GET['eleve']) && !empty($_GET['eleve'])) {
     $eleve_id = intval($_GET['eleve']);
     $where_conditions[] = "cr.num_utilisateur = $eleve_id";
 }
 
-// Recherche dans les descriptions
 if (isset($_GET['search']) && !empty($_GET['search'])) {
     $search_term = mysqli_real_escape_string($bdd, $_GET['search']);
     $where_conditions[] = "(cr.description LIKE '%$search_term%' OR u.nom LIKE '%$search_term%' OR u.prenom LIKE '%$search_term%')";
 }
 
-// Filtre par statut vu/non vu
 if (isset($_GET['sort'])) {
     switch ($_GET['sort']) {
         case 'eleve':
@@ -133,16 +119,13 @@ if (isset($_GET['sort'])) {
             break;
         case 'vu':
             $where_conditions[] = "cr.vu = 1";
-            $order_by = "cr.datetime DESC";
             break;
         case 'non_vu':
             $where_conditions[] = "cr.vu = 0";
-            $order_by = "cr.datetime DESC";
             break;
     }
 }
 
-// Construire la clause WHERE
 $where_clause = "";
 if (!empty($where_conditions)) {
     $where_clause = "WHERE " . implode(" AND ", $where_conditions);
@@ -166,113 +149,69 @@ if (isset($_GET['view']) && !empty($_GET['view'])) {
         $cr_detail = mysqli_fetch_assoc($detail_result);
     }
 }
-
-// Gestion de l'affichage des infos de stage
-$stage_info = null;
-if (isset($_GET['view_stage']) && !empty($_GET['view_stage'])) {
-    $eleve_id = intval($_GET['view_stage']);
-    $stage_query = "SELECT u.prenom, u.nom, s.*, t.nom as tuteur_nom, t.prenom as tuteur_prenom, 
-                           t.tel as tuteur_tel, t.email as tuteur_email
-                    FROM utilisateur u 
-                    LEFT JOIN stage s ON u.num_stage = s.num 
-                    LEFT JOIN tuteur t ON s.num_tuteur = t.num 
-                    WHERE u.num = $eleve_id";
-    $stage_result = mysqli_query($bdd, $stage_query);
-    if (mysqli_num_rows($stage_result) > 0) {
-        $stage_info = mysqli_fetch_assoc($stage_result);
-    }
-}
 ?>
 
 <!DOCTYPE html>
 <html lang="fr">
-
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Liste des comptes rendus</title>
-    <script src="liste_cr_prof.js"></script>
 </head>
-
 <body>
-    <h2>Liste de tous les comptes rendus</h2>
-
-    <?php if (isset($error)): ?>
-        <p style="color: red;"><?php echo $error; ?></p>
-    <?php endif; ?>
+    <h1>📋 Comptes rendus des élèves</h1>
+    <p><a href="accueil.php">← Retour à l'accueil</a></p>
 
     <!-- Barre de recherche -->
-    <div>
-        <form method="GET">
-            <input type="text" name="search" placeholder="Rechercher dans les CR..." value="<?php echo isset($_GET['search']) ? htmlspecialchars($_GET['search']) : ''; ?>" style="padding: 8px; width: 300px;">
+    <div style="background: #f8f9fa; padding: 15px; border-radius: 4px; margin-bottom: 20px;">
+        <form method="GET" style="display: flex; gap: 10px; flex-wrap: wrap;">
+            <input type="text" name="search" placeholder="Rechercher dans les CR..." value="<?php echo isset($_GET['search']) ? htmlspecialchars($_GET['search']) : ''; ?>" style="padding: 8px; flex: 1; min-width: 250px; border: 1px solid #ddd; border-radius: 4px;">
             <?php if (isset($_GET['sort'])): ?>
                 <input type="hidden" name="sort" value="<?php echo htmlspecialchars($_GET['sort']); ?>">
             <?php endif; ?>
             <?php if (isset($_GET['eleve'])): ?>
                 <input type="hidden" name="eleve" value="<?php echo htmlspecialchars($_GET['eleve']); ?>">
             <?php endif; ?>
-            <button type="submit">🔍 Rechercher</button>
-            <?php if (isset($_GET['search'])): ?>
-                <a href="liste_cr_prof.php?<?php 
-                    echo isset($_GET['sort']) ? 'sort=' . $_GET['sort'] : '';
-                    echo (isset($_GET['sort']) && isset($_GET['eleve'])) ? '&' : '';
+            <button type="submit" style="background: #007bff; color: white; padding: 8px 15px; border: none; border-radius: 4px; cursor: pointer; font-weight: 600;">
+                🔍 Rechercher
+            </button>
+            <?php if (isset($_GET['search']) && !empty($_GET['search'])): ?>
+                <a href="liste_cr_prof.php<?php 
+                    echo isset($_GET['sort']) ? '?sort=' . $_GET['sort'] : '';
+                    echo (isset($_GET['sort']) && isset($_GET['eleve'])) ? '&' : (isset($_GET['eleve']) ? '?' : '');
                     echo isset($_GET['eleve']) ? 'eleve=' . $_GET['eleve'] : '';
-                ?>">❌ Effacer</a>
+                ?>" style="background: #6c757d; color: white; padding: 8px 15px; border: none; border-radius: 4px; cursor: pointer; text-decoration: none; display: inline-block;">
+                    ✕ Réinitialiser
+                </a>
             <?php endif; ?>
         </form>
     </div>
 
-    <br>
-
-    <!-- Options de tri et filtrage -->
-    <div>
+    <!-- Options de tri -->
+    <div style="background: #f8f9fa; padding: 15px; border-radius: 4px; margin-bottom: 20px;">
         <strong>Trier par :</strong>
-        <a href="?sort=eleve<?php 
-            echo isset($_GET['eleve']) ? '&eleve=' . $_GET['eleve'] : '';
-            echo isset($_GET['search']) ? '&search=' . urlencode($_GET['search']) : '';
-        ?>">
-            <button type="button"><?php echo (isset($_GET['sort']) && $_GET['sort'] == 'eleve') ? '▶ Élève (A-Z)' : 'Élève (A-Z)'; ?></button>
-        </a>
-        <a href="?sort=date_asc<?php 
-            echo isset($_GET['eleve']) ? '&eleve=' . $_GET['eleve'] : '';
-            echo isset($_GET['search']) ? '&search=' . urlencode($_GET['search']) : '';
-        ?>">
-            <button type="button"><?php echo (isset($_GET['sort']) && $_GET['sort'] == 'date_asc') ? '▶ Date (plus anciens)' : 'Date (plus anciens)'; ?></button>
-        </a>
-        <a href="?sort=date_desc<?php 
-            echo isset($_GET['eleve']) ? '&eleve=' . $_GET['eleve'] : '';
-            echo isset($_GET['search']) ? '&search=' . urlencode($_GET['search']) : '';
-        ?>">
-            <button type="button"><?php echo (isset($_GET['sort']) && $_GET['sort'] == 'date_desc') ? '▶ Date (plus récents)' : 'Date (plus récents)'; ?></button>
-        </a>
-        <a href="?sort=vu<?php 
-            echo isset($_GET['eleve']) ? '&eleve=' . $_GET['eleve'] : '';
-            echo isset($_GET['search']) ? '&search=' . urlencode($_GET['search']) : '';
-        ?>">
-            <button type="button"><?php echo (isset($_GET['sort']) && $_GET['sort'] == 'vu') ? '▶ Déjà vus' : 'Déjà vus'; ?></button>
-        </a>
-        <a href="?sort=non_vu<?php 
-            echo isset($_GET['eleve']) ? '&eleve=' . $_GET['eleve'] : '';
-            echo isset($_GET['search']) ? '&search=' . urlencode($_GET['search']) : '';
-        ?>">
-            <button type="button"><?php echo (isset($_GET['sort']) && $_GET['sort'] == 'non_vu') ? '▶ Non vus' : 'Non vus'; ?></button>
-        </a>
-        <a href="liste_cr_prof.php"><button type="button">Tous les CR</button></a>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px;">
+            <a href="?sort=eleve<?php echo isset($_GET['search']) ? '&search=' . urlencode($_GET['search']) : ''; ?>" style="background: <?php echo (isset($_GET['sort']) && $_GET['sort'] == 'eleve') ? '#007bff' : '#e9ecef'; ?>; color: <?php echo (isset($_GET['sort']) && $_GET['sort'] == 'eleve') ? 'white' : '#333'; ?>; padding: 8px 15px; text-decoration: none; border-radius: 4px; display: inline-block;">Élève (A-Z)</a>
+            <a href="?sort=date_asc<?php echo isset($_GET['search']) ? '&search=' . urlencode($_GET['search']) : ''; ?>" style="background: <?php echo (isset($_GET['sort']) && $_GET['sort'] == 'date_asc') ? '#007bff' : '#e9ecef'; ?>; color: <?php echo (isset($_GET['sort']) && $_GET['sort'] == 'date_asc') ? 'white' : '#333'; ?>; padding: 8px 15px; text-decoration: none; border-radius: 4px; display: inline-block;">Date (plus anciens)</a>
+            <a href="?sort=date_desc<?php echo isset($_GET['search']) ? '&search=' . urlencode($_GET['search']) : ''; ?>" style="background: <?php echo (isset($_GET['sort']) && $_GET['sort'] == 'date_desc') ? '#007bff' : '#e9ecef'; ?>; color: <?php echo (isset($_GET['sort']) && $_GET['sort'] == 'date_desc') ? 'white' : '#333'; ?>; padding: 8px 15px; text-decoration: none; border-radius: 4px; display: inline-block;">Date (plus récents)</a>
+            <a href="?sort=vu<?php echo isset($_GET['search']) ? '&search=' . urlencode($_GET['search']) : ''; ?>" style="background: <?php echo (isset($_GET['sort']) && $_GET['sort'] == 'vu') ? '#007bff' : '#e9ecef'; ?>; color: <?php echo (isset($_GET['sort']) && $_GET['sort'] == 'vu') ? 'white' : '#333'; ?>; padding: 8px 15px; text-decoration: none; border-radius: 4px; display: inline-block;">Consultés</a>
+            <a href="?sort=non_vu<?php echo isset($_GET['search']) ? '&search=' . urlencode($_GET['search']) : ''; ?>" style="background: <?php echo (isset($_GET['sort']) && $_GET['sort'] == 'non_vu') ? '#007bff' : '#e9ecef'; ?>; color: <?php echo (isset($_GET['sort']) && $_GET['sort'] == 'non_vu') ? 'white' : '#333'; ?>; padding: 8px 15px; text-decoration: none; border-radius: 4px; display: inline-block;">Non consultés</a>
+            <a href="liste_cr_prof.php" style="background: #e9ecef; color: #333; padding: 8px 15px; text-decoration: none; border-radius: 4px; display: inline-block;">Tous</a>
+        </div>
     </div>
 
-    <br>
-
     <!-- Filtre par élève -->
-    <div>
+    <div style="background: #f8f9fa; padding: 15px; border-radius: 4px; margin-bottom: 20px;">
         <strong>Filtrer par élève :</strong>
-        <form method="GET" id="filterForm">
+        <form method="GET" style="margin-top: 10px;">
             <?php if (isset($_GET['sort'])): ?>
                 <input type="hidden" name="sort" value="<?php echo htmlspecialchars($_GET['sort']); ?>">
             <?php endif; ?>
             <?php if (isset($_GET['search'])): ?>
                 <input type="hidden" name="search" value="<?php echo htmlspecialchars($_GET['search']); ?>">
             <?php endif; ?>
-
-            <select name="eleve" id="eleveSelect" onchange="document.getElementById('filterForm').submit()">
+            
+            <select name="eleve" onchange="this.form.submit();" style="padding: 8px; border: 1px solid #ddd; border-radius: 4px; cursor: pointer;">
                 <option value="">-- Tous les élèves --</option>
                 <?php
                 mysqli_data_seek($eleves_result, 0);
@@ -286,12 +225,10 @@ if (isset($_GET['view_stage']) && !empty($_GET['view_stage'])) {
         </form>
     </div>
 
-    <br>
-
     <?php if (mysqli_num_rows($result) > 0): ?>
-        <table border="1">
+        <table border="1" cellpadding="12" cellspacing="0" style="width: 100%;">
             <thead>
-                <tr>
+                <tr style="background: #f8f9fa;">
                     <th>Élève</th>
                     <th>Date et heure</th>
                     <th>Description</th>
@@ -306,225 +243,253 @@ if (isset($_GET['view_stage']) && !empty($_GET['view_stage'])) {
                     $pieces_jointes = getPiecesJointes($cr['num']);
                     $commentaires = getCommentaires($cr['num']);
                 ?>
-                    <tr>
-                        <td>
-                            <?php echo htmlspecialchars($cr['prenom'] . ' ' . $cr['nom']); ?>
-                            <br>
-                            <a href="?view_stage=<?php echo $cr['num_utilisateur']; ?><?php
-                               echo isset($_GET['sort']) ? '&sort=' . urlencode($_GET['sort']) : '';
-                               echo isset($_GET['eleve']) ? '&eleve=' . urlencode($_GET['eleve']) : '';
-                               echo isset($_GET['search']) ? '&search=' . urlencode($_GET['search']) : '';
-                               ?>" style="font-size: 12px;">📋 Voir le stage</a>
-                        </td>
-                        <td><?php echo formatDateFrench($cr['datetime']); ?></td>
-                        <td>
-                            <a href="?view=<?php echo $cr['num']; ?><?php
-                               echo isset($_GET['sort']) ? '&sort=' . urlencode($_GET['sort']) : '';
-                               echo isset($_GET['eleve']) ? '&eleve=' . urlencode($_GET['eleve']) : '';
-                               echo isset($_GET['search']) ? '&search=' . urlencode($_GET['search']) : '';
-                               ?>" class="view-cr">
-                                <?php
-                                $desc = htmlspecialchars($cr['description']);
-                                echo (strlen($desc) > 100) ? substr($desc, 0, 100) . '...' : $desc;
-                                ?>
-                            </a>
-                        </td>
-                        <td>
-                            <?php if (!empty($pieces_jointes)): ?>
-                                <?php foreach ($pieces_jointes as $piece): ?>
-                                    <div style="margin: 2px 0;">
-                                        <a href="telecharger.php?id=<?php echo $piece['id']; ?>" target="_blank">
-                                            📎 <?php echo htmlspecialchars($piece['nom_fichier']); ?>
-                                        </a>
-                                    </div>
-                                <?php endforeach; ?>
-                            <?php else: ?>
-                                -
-                            <?php endif; ?>
-                        </td>
-                        <td>
-                            <?php if (!empty($commentaires)): ?>
+                <tr>
+                    <td>
+                        <strong><?php echo htmlspecialchars($cr['prenom'] . ' ' . $cr['nom']); ?></strong>
+                        <br><a href="?view_stage=<?php echo $cr['num_utilisateur']; ?><?php
+                           echo isset($_GET['sort']) ? '&sort=' . urlencode($_GET['sort']) : '';
+                           echo isset($_GET['eleve']) ? '&eleve=' . urlencode($_GET['eleve']) : '';
+                           echo isset($_GET['search']) ? '&search=' . urlencode($_GET['search']) : '';
+                           ?>" style="font-size: 12px; color: #007bff;">Voir le stage</a>
+                    </td>
+                    <td><?php echo formatDateFrench($cr['datetime']); ?></td>
+                    <td>
+                        <a href="?view=<?php echo $cr['num']; ?><?php
+                           echo isset($_GET['sort']) ? '&sort=' . urlencode($_GET['sort']) : '';
+                           echo isset($_GET['eleve']) ? '&eleve=' . urlencode($_GET['eleve']) : '';
+                           echo isset($_GET['search']) ? '&search=' . urlencode($_GET['search']) : '';
+                           ?>" style="color: #007bff; text-decoration: none; cursor: pointer;">
+                            <?php
+                            $desc = htmlspecialchars($cr['description']);
+                            echo (strlen($desc) > 80) ? substr($desc, 0, 80) . '...' : $desc;
+                            ?>
+                        </a>
+                    </td>
+                    <td>
+                        <?php if (!empty($pieces_jointes)): ?>
+                            <span style="background: #e7f3ff; padding: 4px 8px; border-radius: 4px; font-size: 12px;">
+                                <?php echo count($pieces_jointes); ?> fichier(s)
+                            </span>
+                        <?php else: ?>
+                            -
+                        <?php endif; ?>
+                    </td>
+                    <td>
+                        <?php if (!empty($commentaires)): ?>
+                            <span style="background: #fff3cd; padding: 4px 8px; border-radius: 4px; font-size: 12px;">
                                 <?php echo count($commentaires); ?> commentaire(s)
+                            </span>
+                        <?php else: ?>
+                            -
+                        <?php endif; ?>
+                    </td>
+                    <td><?php echo $cr['vu'] ? '✅ Consulté' : '⏳ Non consulté'; ?></td>
+                    <td>
+                        <form method="POST" style="display: inline; margin-bottom: 5px;">
+                            <input type="hidden" name="cr_num" value="<?php echo $cr['num']; ?>">
+                            <?php if ($cr['vu'] == 0): ?>
+                                <input type="hidden" name="vu_value" value="1">
+                                <button type="submit" name="update_vu" style="background: #28a745; color: white; padding: 6px 12px; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">
+                                    Marquer comme vu
+                                </button>
                             <?php else: ?>
-                                Aucun
+                                <input type="hidden" name="vu_value" value="0">
+                                <button type="submit" name="update_vu" style="background: #ffc107; color: #333; padding: 6px 12px; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">
+                                    Marquer comme non vu
+                                </button>
                             <?php endif; ?>
-                        </td>
-                        <td><?php echo $cr['vu'] ? '✅ Vu' : '❌ Non vu'; ?></td>
-                        <td>
-                            <form method="POST" style="display: inline;">
-                                <input type="hidden" name="cr_num" value="<?php echo $cr['num']; ?>">
-                                <?php if ($cr['vu'] == 0): ?>
-                                    <input type="hidden" name="vu_value" value="1">
-                                    <button type="submit" name="update_vu">Marquer comme vu</button>
-                                <?php else: ?>
-                                    <input type="hidden" name="vu_value" value="0">
-                                    <button type="submit" name="update_vu" class="non-vu-btn">Marquer comme non vu</button>
-                                <?php endif; ?>
-                            </form>
-                            <br>
-                            <a href="?view=<?php echo $cr['num']; ?><?php
-                               echo isset($_GET['sort']) ? '&sort=' . urlencode($_GET['sort']) : '';
-                               echo isset($_GET['eleve']) ? '&eleve=' . urlencode($_GET['eleve']) : '';
-                               echo isset($_GET['search']) ? '&search=' . urlencode($_GET['search']) : '';
-                               ?>">📝 Commenter</a>
-                        </td>
-                    </tr>
+                        </form>
+                        <br>
+                        <a href="?view=<?php echo $cr['num']; ?><?php
+                           echo isset($_GET['sort']) ? '&sort=' . urlencode($_GET['sort']) : '';
+                           echo isset($_GET['eleve']) ? '&eleve=' . urlencode($_GET['eleve']) : '';
+                           echo isset($_GET['search']) ? '&search=' . urlencode($_GET['search']) : '';
+                           ?>" style="background: #007bff; color: white; padding: 6px 12px; text-decoration: none; border-radius: 4px; font-size: 12px; display: inline-block;">
+                            Voir détails
+                        </a>
+                    </td>
+                </tr>
                 <?php endwhile; ?>
             </tbody>
         </table>
     <?php else: ?>
-        <p>Aucun compte rendu trouvé.</p>
+        <div style="background: #f8f9fa; padding: 30px; text-align: center; border-radius: 4px; border: 1px solid #dee2e6;">
+            <p style="color: #999; font-size: 16px;">Aucun compte rendu trouvé</p>
+        </div>
     <?php endif; ?>
 
     <!-- Modal pour afficher le détail du CR -->
-    <?php if ($cr_detail): ?>
-        <div style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000;">
-            <div style="background: white; margin: 50px auto; padding: 20px; width: 80%; max-width: 700px; position: relative;">
-                <span style="position: absolute; right: 15px; top: 10px; font-size: 24px; cursor: pointer;" onclick="window.location.href='liste_cr_prof.php?<?php
-                echo isset($_GET['sort']) ? 'sort=' . $_GET['sort'] : '';
-                echo (isset($_GET['sort']) && isset($_GET['eleve'])) ? '&' : '';
-                echo isset($_GET['eleve']) ? 'eleve=' . $_GET['eleve'] : '';
-                echo isset($_GET['search']) ? '&search=' . urlencode($_GET['search']) : '';
-                ?>'">&times;</span>
-
-                <h2>Compte rendu détaillé</h2>
-
-                <div>
-                    <p><strong>Élève :</strong>
-                        <?php echo htmlspecialchars($cr_detail['prenom'] . ' ' . $cr_detail['nom']); ?>
-                        <a href="?view_stage=<?php echo $cr_detail['num_utilisateur']; ?><?php
-                           echo isset($_GET['sort']) ? '&sort=' . urlencode($_GET['sort']) : '';
-                           echo isset($_GET['eleve']) ? '&eleve=' . urlencode($_GET['eleve']) : '';
-                           echo isset($_GET['search']) ? '&search=' . urlencode($_GET['search']) : '';
-                           ?>" style="margin-left: 10px;">📋 Voir le stage</a>
-                    </p>
-                    <p><strong>Date de création :</strong> <?php echo formatDateFrench($cr_detail['datetime']); ?></p>
-                    <p><strong>Statut :</strong> <?php echo $cr_detail['vu'] ? '✅ Vu' : '❌ Non vu'; ?></p>
-                </div>
-
-                <div>
-                    <h3>Description :</h3>
-                    <p><?php echo nl2br(htmlspecialchars($cr_detail['description'])); ?></p>
-                </div>
-
-                <!-- Affichage des pièces jointes -->
-                <?php 
-                $pieces_jointes = getPiecesJointes($cr_detail['num']);
-                if (!empty($pieces_jointes)): ?>
-                    <div>
-                        <h3>Pièces jointes :</h3>
-                        <?php foreach ($pieces_jointes as $piece): ?>
-                            <div style="background: #f0f0f0; padding: 8px; margin: 5px 0; border-radius: 3px;">
-                                <a href="telecharger.php?id=<?php echo $piece['id']; ?>" target="_blank">
-                                    📎 <?php echo htmlspecialchars($piece['nom_fichier']); ?>
-                                </a>
-                                (<?php echo formaterTailleFichier($piece['taille']); ?>)
-                            </div>
-                        <?php endforeach; ?>
-                    </div>
-                <?php endif; ?>
-
-                <!-- Affichage des commentaires existants -->
-                <?php 
-                $commentaires = getCommentaires($cr_detail['num']);
-                if (!empty($commentaires)): ?>
-                    <div>
-                        <h3>Commentaires :</h3>
-                        <?php foreach ($commentaires as $commentaire): ?>
-                            <div style="background: #f9f9f9; padding: 10px; margin: 10px 0; border-left: 3px solid #007bff;">
-                                <strong><?php echo htmlspecialchars($commentaire['prenom'] . ' ' . $commentaire['nom']); ?></strong>
-                                (<?php echo formatDateFrench($commentaire['date_creation']); ?>):<br>
-                                <?php echo nl2br(htmlspecialchars($commentaire['commentaire'])); ?>
-                            </div>
-                        <?php endforeach; ?>
-                    </div>
-                <?php endif; ?>
-
-                <!-- Formulaire pour ajouter un commentaire -->
-                <div>
-                    <h3>Ajouter un commentaire :</h3>
-                    <form method="POST">
-                        <input type="hidden" name="cr_num" value="<?php echo $cr_detail['num']; ?>">
-                        <textarea name="commentaire" rows="4" cols="60" placeholder="Votre commentaire..." required></textarea><br>
-                        <button type="submit" name="ajouter_commentaire">Ajouter le commentaire</button>
-                    </form>
-                    <?php if (isset($message_commentaire)): ?>
-                        <p style="color:green"><?php echo $message_commentaire; ?></p>
-                    <?php endif; ?>
-                    <?php if (isset($error_commentaire)): ?>
-                        <p style="color:red"><?php echo $error_commentaire; ?></p>
-                    <?php endif; ?>
-                </div>
-
-                <form method="POST">
-                    <input type="hidden" name="cr_num" value="<?php echo $cr_detail['num']; ?>">
-                    <?php if ($cr_detail['vu'] == 0): ?>
-                        <input type="hidden" name="vu_value" value="1">
-                        <button type="submit" name="update_vu">Marquer comme vu</button>
-                    <?php else: ?>
-                        <input type="hidden" name="vu_value" value="0">
-                        <button type="submit" name="update_vu" class="non-vu-btn">Marquer comme non vu</button>
-                    <?php endif; ?>
-                </form>
-
-                <p>
-                    <a href="liste_cr_prof.php?<?php
+    <?php if ($cr_detail): 
+        $commentaires = getCommentaires($cr_detail['num']);
+        $pieces_jointes = getPiecesJointes($cr_detail['num']);
+    ?>
+    <div style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 20px;">
+        <div style="background: white; border-radius: 8px; max-width: 700px; width: 100%; max-height: 85vh; overflow-y: auto;">
+            <div style="padding: 20px; border-bottom: 2px solid #f0f0f0; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; background: white;">
+                <h2 style="margin: 0;">Détail du compte rendu</h2>
+                <a href="liste_cr_prof.php?<?php
                     echo isset($_GET['sort']) ? 'sort=' . $_GET['sort'] : '';
                     echo (isset($_GET['sort']) && isset($_GET['eleve'])) ? '&' : '';
                     echo isset($_GET['eleve']) ? 'eleve=' . $_GET['eleve'] : '';
                     echo isset($_GET['search']) ? '&search=' . urlencode($_GET['search']) : '';
-                    ?>">Fermer</a>
-                </p>
+                ?>" style="text-decoration: none; font-size: 24px; color: #999; cursor: pointer;">✕</a>
+            </div>
+
+            <div style="padding: 20px;">
+                <div style="background: #f8f9fa; padding: 15px; margin-bottom: 20px; border-radius: 4px;">
+                    <p><strong>Élève :</strong> <?php echo htmlspecialchars($cr_detail['prenom'] . ' ' . $cr_detail['nom']); ?></p>
+                    <p><strong>Date de création :</strong> <?php echo formatDateFrench($cr_detail['datetime']); ?></p>
+                    <p><strong>Statut :</strong> <?php echo $cr_detail['vu'] ? '✅ Consulté' : '⏳ Non consulté'; ?></p>
+                </div>
+
+                <h3>Description</h3>
+                <div style="background: #f8f9fa; padding: 12px; border-radius: 4px; margin-bottom: 20px; white-space: pre-wrap; line-height: 1.6;">
+                    <?php echo htmlspecialchars($cr_detail['description']); ?>
+                </div>
+
+                <!-- Pièces jointes -->
+                <?php if (!empty($pieces_jointes)): ?>
+                <h3>Pièces jointes</h3>
+                <div style="margin-bottom: 20px;">
+                    <?php foreach ($pieces_jointes as $piece): ?>
+                        <div style="background: #f0f0f0; padding: 10px; margin: 8px 0; border-radius: 4px; display: flex; justify-content: space-between; align-items: center;">
+                            <span>📄 <?php echo htmlspecialchars($piece['nom_fichier']); ?> (<?php echo formaterTailleFichier($piece['taille']); ?>)</span>
+                            <a href="telecharger.php?id=<?php echo $piece['id']; ?>" target="_blank" style="background: #007bff; color: white; padding: 5px 12px; text-decoration: none; border-radius: 4px; font-size: 12px;">
+                                Télécharger
+                            </a>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+                <?php endif; ?>
+
+                <!-- Commentaires existants -->
+                <?php if (!empty($commentaires)): ?>
+                <h3>Commentaires existants</h3>
+                <div style="margin-bottom: 20px;">
+                    <?php foreach ($commentaires as $commentaire): ?>
+                        <div style="background: #e7f3ff; padding: 12px; margin: 10px 0; border-left: 4px solid #007bff; border-radius: 4px;">
+                            <strong><?php echo htmlspecialchars($commentaire['prenom'] . ' ' . $commentaire['nom']); ?></strong>
+                            <span style="color: #999; font-size: 12px;">— <?php echo formatDateFrench($commentaire['date_creation']); ?></span>
+                            <p style="margin: 8px 0 0 0; white-space: pre-wrap; line-height: 1.5;">
+                                <?php echo htmlspecialchars($commentaire['commentaire']); ?>
+                            </p>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+                <?php endif; ?>
+
+                <!-- Formulaire pour ajouter un commentaire -->
+                <h3>Ajouter un commentaire</h3>
+                <form method="POST">
+                    <input type="hidden" name="cr_num" value="<?php echo $cr_detail['num']; ?>">
+                    <textarea name="commentaire" rows="5" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-family: Arial, sans-serif; margin-bottom: 10px;" placeholder="Votre commentaire..." required></textarea>
+                    <button type="submit" name="ajouter_commentaire" style="background: #28a745; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-weight: 600;">
+                        Ajouter le commentaire
+                    </button>
+                </form>
+
+                <?php if ($message_commentaire): ?>
+                    <div style="background: #d4edda; color: #155724; padding: 12px; margin-top: 15px; border-radius: 4px; border-left: 4px solid #28a745;">
+                        ✅ <?php echo $message_commentaire; ?>
+                    </div>
+                <?php endif; ?>
+
+                <!-- Bouton marquer comme vu/non vu -->
+                <form method="POST" style="margin-top: 20px;">
+                    <input type="hidden" name="cr_num" value="<?php echo $cr_detail['num']; ?>">
+                    <?php if ($cr_detail['vu'] == 0): ?>
+                        <input type="hidden" name="vu_value" value="1">
+                        <button type="submit" name="update_vu" style="background: #28a745; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; width: 100%;">
+                            ✅ Marquer comme consulté
+                        </button>
+                    <?php else: ?>
+                        <input type="hidden" name="vu_value" value="0">
+                        <button type="submit" name="update_vu" style="background: #ffc107; color: #333; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; width: 100%;">
+                            ⏳ Marquer comme non consulté
+                        </button>
+                    <?php endif; ?>
+                </form>
+
+                <a href="liste_cr_prof.php?<?php
+                    echo isset($_GET['sort']) ? 'sort=' . $_GET['sort'] : '';
+                    echo (isset($_GET['sort']) && isset($_GET['eleve'])) ? '&' : '';
+                    echo isset($_GET['eleve']) ? 'eleve=' . $_GET['eleve'] : '';
+                    echo isset($_GET['search']) ? '&search=' . urlencode($_GET['search']) : '';
+                ?>" style="background: #6c757d; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px; display: inline-block; margin-top: 10px; text-align: center; width: 100%; box-sizing: border-box;">
+                    Fermer
+                </a>
             </div>
         </div>
+    </div>
     <?php endif; ?>
 
     <!-- Modal pour afficher les infos de stage -->
-    <?php if ($stage_info): ?>
-        <div style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000;">
-            <div style="background: white; margin: 50px auto; padding: 20px; width: 80%; max-width: 700px; position: relative;">
-                <span style="position: absolute; right: 15px; top: 10px; font-size: 24px; cursor: pointer;" onclick="window.location.href='liste_cr_prof.php?<?php
-                echo isset($_GET['sort']) ? 'sort=' . $_GET['sort'] : '';
-                echo (isset($_GET['sort']) && isset($_GET['eleve'])) ? '&' : '';
-                echo isset($_GET['eleve']) ? 'eleve=' . $_GET['eleve'] : '';
-                echo isset($_GET['search']) ? '&search=' . urlencode($_GET['search']) : '';
-                echo isset($_GET['view']) ? '&view=' . $_GET['view'] : '';
-                ?>'">&times;</span>
-
-                <h2>Informations de stage - <?php echo $stage_info['prenom'] . ' ' . $stage_info['nom']; ?></h2>
-
-                <?php if (!empty($stage_info['nom'])): ?>
-                    <h3>Entreprise</h3>
-                    <p><strong>Nom :</strong> <?php echo htmlspecialchars($stage_info['nom'] ?? ''); ?></p>
-                    <p><strong>Adresse :</strong> <?php echo htmlspecialchars($stage_info['adresse'] ?? ''); ?></p>
-                    <p><strong>Code postal :</strong> <?php echo htmlspecialchars($stage_info['CP'] ?? ''); ?></p>
-                    <p><strong>Ville :</strong> <?php echo htmlspecialchars($stage_info['ville'] ?? ''); ?></p>
-                    <p><strong>Téléphone :</strong> <?php echo htmlspecialchars($stage_info['tel'] ?? ''); ?></p>
-                    <p><strong>Email :</strong> <?php echo htmlspecialchars($stage_info['email'] ?? ''); ?></p>
-                    <p><strong>Libellé du stage :</strong><br><?php echo nl2br(htmlspecialchars($stage_info['libelleStage'] ?? '')); ?></p>
-
-                    <h3>Tuteur en entreprise</h3>
-                    <p><strong>Nom :</strong> <?php echo htmlspecialchars(($stage_info['tuteur_prenom'] ?? '') . ' ' . ($stage_info['tuteur_nom'] ?? '')); ?></p>
-                    <p><strong>Téléphone :</strong> <?php echo htmlspecialchars($stage_info['tuteur_tel'] ?? ''); ?></p>
-                    <p><strong>Email :</strong> <?php echo htmlspecialchars($stage_info['tuteur_email'] ?? ''); ?></p>
-                <?php else: ?>
-                    <p>Cet élève n'a pas encore renseigné ses informations de stage.</p>
-                <?php endif; ?>
-
-                <p>
-                    <a href="liste_cr_prof.php?<?php
+    <?php if (isset($_GET['view_stage']) && !empty($_GET['view_stage'])): 
+        $eleve_id = intval($_GET['view_stage']);
+        $stage_query = "SELECT u.prenom, u.nom, s.*, t.nom as tuteur_nom, t.prenom as tuteur_prenom, 
+                                t.tel as tuteur_tel, t.email as tuteur_email
+                         FROM utilisateur u 
+                         LEFT JOIN stage s ON u.num_stage = s.num 
+                         LEFT JOIN tuteur t ON s.num_tuteur = t.num 
+                         WHERE u.num = $eleve_id";
+        $stage_result = mysqli_query($bdd, $stage_query);
+        $stage_info = mysqli_fetch_assoc($stage_result);
+    ?>
+    <div style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 20px;">
+        <div style="background: white; border-radius: 8px; max-width: 700px; width: 100%; max-height: 85vh; overflow-y: auto;">
+            <div style="padding: 20px; border-bottom: 2px solid #f0f0f0; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; background: white;">
+                <h2 style="margin: 0;">Informations de stage</h2>
+                <a href="liste_cr_prof.php?<?php
                     echo isset($_GET['sort']) ? 'sort=' . $_GET['sort'] : '';
                     echo (isset($_GET['sort']) && isset($_GET['eleve'])) ? '&' : '';
                     echo isset($_GET['eleve']) ? 'eleve=' . $_GET['eleve'] : '';
                     echo isset($_GET['search']) ? '&search=' . urlencode($_GET['search']) : '';
                     echo isset($_GET['view']) ? '&view=' . $_GET['view'] : '';
-                    ?>">Fermer</a>
-                </p>
+                ?>" style="text-decoration: none; font-size: 24px; color: #999; cursor: pointer;">✕</a>
+            </div>
+
+            <div style="padding: 20px;">
+                <p style="margin-bottom: 15px;"><strong>Élève :</strong> <?php echo htmlspecialchars($stage_info['prenom'] . ' ' . $stage_info['nom']); ?></p>
+
+                <?php if (!empty($stage_info['nom'])): ?>
+                    <h3>Entreprise</h3>
+                    <div style="background: #f8f9fa; padding: 12px; border-radius: 4px; margin-bottom: 20px;">
+                        <p><strong>Nom :</strong> <?php echo htmlspecialchars($stage_info['nom']); ?></p>
+                        <p><strong>Adresse :</strong> <?php echo htmlspecialchars($stage_info['adresse']); ?></p>
+                        <p><strong>Code postal :</strong> <?php echo htmlspecialchars($stage_info['CP']); ?></p>
+                        <p><strong>Ville :</strong> <?php echo htmlspecialchars($stage_info['ville']); ?></p>
+                        <p><strong>Téléphone :</strong> <?php echo htmlspecialchars($stage_info['tel']); ?></p>
+                        <p><strong>Email :</strong> <?php echo htmlspecialchars($stage_info['email']); ?></p>
+                        <p style="margin-top: 10px;"><strong>Libellé du stage :</strong></p>
+                        <p style="white-space: pre-wrap; line-height: 1.5;">
+                            <?php echo htmlspecialchars($stage_info['libelleStage']); ?>
+                        </p>
+                    </div>
+
+                    <h3>Tuteur en entreprise</h3>
+                    <div style="background: #f8f9fa; padding: 12px; border-radius: 4px;">
+                        <p><strong>Nom :</strong> <?php echo htmlspecialchars($stage_info['tuteur_prenom'] . ' ' . $stage_info['tuteur_nom']); ?></p>
+                        <p><strong>Téléphone :</strong> <?php echo htmlspecialchars($stage_info['tuteur_tel']); ?></p>
+                        <p><strong>Email :</strong> <?php echo htmlspecialchars($stage_info['tuteur_email']); ?></p>
+                    </div>
+                <?php else: ?>
+                    <div style="background: #fff3cd; padding: 15px; border-radius: 4px; border-left: 4px solid #ffc107;">
+                        <p>Cet élève n'a pas encore renseigné ses informations de stage.</p>
+                    </div>
+                <?php endif; ?>
+
+                <a href="liste_cr_prof.php?<?php
+                    echo isset($_GET['sort']) ? 'sort=' . $_GET['sort'] : '';
+                    echo (isset($_GET['sort']) && isset($_GET['eleve'])) ? '&' : '';
+                    echo isset($_GET['eleve']) ? 'eleve=' . $_GET['eleve'] : '';
+                    echo isset($_GET['search']) ? '&search=' . urlencode($_GET['search']) : '';
+                    echo isset($_GET['view']) ? '&view=' . $_GET['view'] : '';
+                ?>" style="background: #6c757d; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px; display: inline-block; margin-top: 15px; text-align: center; width: 100%; box-sizing: border-box;">
+                    Fermer
+                </a>
             </div>
         </div>
+    </div>
     <?php endif; ?>
-
-    <p><a href="accueil.php">Retour à l'accueil</a></p>
 </body>
-
 </html>
