@@ -3,6 +3,9 @@ session_start();
 include '_conf.php';
 include 'fonctions.php';
 
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception;
+
 if (!isset($_SESSION['Sid'])) {
     header("Location: index.php");
     exit();
@@ -53,9 +56,6 @@ if (isset($_POST['renvoyer_validation'])) {
     
     if (mysqli_query($bdd, $update_query)) {
         // Envoi de l'email de vérification
-        use PHPMailer\PHPMailer\PHPMailer;
-        use PHPMailer\PHPMailer\Exception;
-
         require __DIR__ . '/phpmailer/Exception.php';
         require __DIR__ . '/phpmailer/PHPMailer.php';
         require __DIR__ . '/phpmailer/SMTP.php';

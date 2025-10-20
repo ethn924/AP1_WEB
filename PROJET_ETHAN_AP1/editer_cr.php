@@ -72,6 +72,23 @@ if ($stage_info &&
 
 $date_cr = date('Y-m-d');
 $description = '';
+$contenu_html = '';
+
+// Récupération des modèles de CR
+$modeles_query = "SELECT * FROM modeles_cr WHERE actif = 1 ORDER BY date_creation DESC";
+$modeles_result = mysqli_query($bdd, $modeles_query);
+
+// Récupération du contenu d'un modèle si demandé
+if (isset($_GET['modele']) && !empty($_GET['modele'])) {
+    $modele_id = intval($_GET['modele']);
+    $modele_query = "SELECT * FROM modeles_cr WHERE id = $modele_id AND actif = 1";
+    $modele_result = mysqli_query($bdd, $modele_query);
+    if (mysqli_num_rows($modele_result) > 0) {
+        $modele = mysqli_fetch_assoc($modele_result);
+        $contenu_html = $modele['contenu_html'];
+        $description = "Compte rendu basé sur le modèle: " . $modele['titre'];
+    }
+}
 
 if (isset($_POST['show_cr'])) {
     $date_cr = $_POST['date_cr'];
@@ -86,18 +103,20 @@ if (isset($_POST['hide_cr'])) {
 if (isset($_POST['insérer']) && $show_cr_form) {
     $date_cr = $_POST['date_cr'];
     $description = mysqli_real_escape_string($bdd, $_POST['description']);
+    $contenu_html = mysqli_real_escape_string($bdd, $_POST['contenu_html']);
 
     $today = date('Y-m-d');
     if ($date_cr != $today) {
         $error = "Vous ne pouvez créer des comptes rendus que pour la date d'aujourd'hui (" . formatDateFrench($today) . ").";
     } else {
-        $insert_query = "INSERT INTO cr (date, description, vu, datetime, num_utilisateur) 
-                        VALUES ('$date_cr', '$description', 0, NOW(), $user_id)";
+        $insert_query = "INSERT INTO cr (date, description, contenu_html, vu, datetime, num_utilisateur) 
+                        VALUES ('$date_cr', '$description', '$contenu_html', 0, NOW(), $user_id)";
         
         if (mysqli_query($bdd, $insert_query)) {
             $cr_id = mysqli_insert_id($bdd);
             $message = "Nouveau compte rendu créé avec succès !";
             $description = '';
+            $contenu_html = '';
             
             if (!empty($_FILES['pieces_jointes']['name'][0])) {
                 $upload_errors = [];
@@ -144,7 +163,23 @@ if ($show_cr_list) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Créer un compte rendu</title>
+    <!-- Inclusion de TinyMCE -->
+    <script src="https://cdn.tiny.cloud/1/no-api-key/tinymce/6/tinymce.min.js" referrerpolicy="origin"></script>
+    <style>
+        /* Masquer l'alerte TinyMCE sur les clés API */
+        .tox-notification { display: none !important; }
+    </style>
     <script>
+        tinymce.init({
+            selector: '#contenu_html',
+            height: 400,
+            plugins: 'lists link image table code help wordcount',
+            toolbar: 'undo redo | formatselect | bold italic | alignleft aligncenter alignright | bullist numlist outdent indent | link image | table | code',
+            menubar: 'file edit view insert format tools table help',
+            content_style: 'body { font-family: Arial, sans-serif; font-size: 14px; }',
+            language: 'fr_FR'
+        });
+        
         // Types de fichiers autorisés
         const typesAutorises = <?php echo json_encode($types_autorises); ?>;
         const tailleMaxFichier = <?php echo $taille_max_fichier; ?>;
@@ -229,157 +264,290 @@ if ($show_cr_list) {
                 verifierFichiers();
             }
         });
+        
+        // Fonction pour charger un modèle
+        function chargerModele(id) {
+            window.location.href = 'editer_cr.php?modele=' + id;
+        }
     </script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        .form-control {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        textarea.form-control {
+            min-height: 100px;
+        }
+        .btn {
+            display: inline-block;
+            background: #007bff;
+            color: white;
+            padding: 10px 15px;
+            text-decoration: none;
+            border-radius: 4px;
+            font-weight: bold;
+            border: none;
+            cursor: pointer;
+        }
+        .btn-secondary {
+            background: #6c757d;
+        }
+        .btn-success {
+            background: #28a745;
+        }
+        .alert {
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+        .alert-success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .alert-danger {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .alert-warning {
+            background-color: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeeba;
+        }
+        .modele-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .modele-card {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 15px;
+            width: calc(33.333% - 15px);
+            min-width: 250px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .modele-card:hover {
+            background: #e9ecef;
+            border-color: #adb5bd;
+        }
+        .modele-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .modele-description {
+            color: #6c757d;
+            font-size: 14px;
+            margin-bottom: 15px;
+        }
+        h2 {
+            color: #333;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+            margin-top: 30px;
+        }
+    </style>
 </head>
 <body>
-    <h1>Créer un compte rendu</h1>
-    <p><a href="accueil.php">← Retour à l'accueil</a></p>
+    <div class="container">
+        <h1>Créer un compte rendu</h1>
+        <p><a href="accueil.php">← Retour à l'accueil</a> | <a href="tableau_bord_eleve.php">Tableau de bord</a></p>
 
-    <?php if ($message): ?>
-        <div style="background: #d4edda; color: #155724; padding: 12px; margin-bottom: 20px; border-radius: 4px; border-left: 4px solid #28a745;">
-            ✅ <?php echo $message; ?>
-        </div>
-    <?php endif; ?>
-
-    <?php if ($error): ?>
-        <div style="background: #f8d7da; color: #721c24; padding: 12px; margin-bottom: 20px; border-radius: 4px; border-left: 4px solid #dc3545;">
-            ❌ <?php echo $error; ?>
-        </div>
-    <?php endif; ?>
-
-    <?php if (!$show_cr_form): ?>
-        <div style="background: #fff3cd; border: 1px solid #ffc107; padding: 15px; margin-bottom: 20px; border-radius: 4px; border-left: 4px solid #ffc107;">
-            <h3>⚠️ Informations manquantes</h3>
-            <p>Avant de créer un compte rendu, vous devez compléter vos informations de stage et de tuteur.</p>
-            <p>Champs manquants :</p>
-            <ul>
-                <?php if (!$stage_info || empty($stage_info['nom'])) echo "<li>Nom de l'entreprise</li>"; ?>
-                <?php if (!$stage_info || empty($stage_info['adresse'])) echo "<li>Adresse du stage</li>"; ?>
-                <?php if (!$stage_info || empty($stage_info['CP'])) echo "<li>Code postal</li>"; ?>
-                <?php if (!$stage_info || empty($stage_info['ville'])) echo "<li>Ville</li>"; ?>
-                <?php if (!$stage_info || empty($stage_info['tel'])) echo "<li>Téléphone de l'entreprise</li>"; ?>
-                <?php if (!$stage_info || empty($stage_info['libelleStage'])) echo "<li>Libellé du stage</li>"; ?>
-                <?php if (!$stage_info || empty($stage_info['email'])) echo "<li>Email de l'entreprise</li>"; ?>
-                <?php if (!$stage_info || empty($stage_info['tuteur_nom'])) echo "<li>Nom du tuteur</li>"; ?>
-                <?php if (!$stage_info || empty($stage_info['tuteur_prenom'])) echo "<li>Prénom du tuteur</li>"; ?>
-                <?php if (!$stage_info || empty($stage_info['tuteur_tel'])) echo "<li>Téléphone du tuteur</li>"; ?>
-                <?php if (!$stage_info || empty($stage_info['tuteur_email'])) echo "<li>Email du tuteur</li>"; ?>
-            </ul>
-            <p><a href="mon_stage.php" style="background: #ffc107; color: #333; padding: 10px 20px; text-decoration: none; border-radius: 4px; display: inline-block; font-weight: bold; margin-top: 10px;">
-                ➜ Remplir mes informations de stage
-            </a></p>
-        </div>
-    <?php else: ?>
-        <div style="background: #d4edda; border: 1px solid #28a745; padding: 15px; margin-bottom: 20px; border-radius: 4px;">
-            <h3>✅ Vos informations de stage sont complètes</h3>
-            <p><strong>Entreprise :</strong> <?php echo htmlspecialchars($stage_info['nom']); ?></p>
-            <p><strong>Tuteur :</strong> <?php echo htmlspecialchars($stage_info['tuteur_prenom'] . ' ' . $stage_info['tuteur_nom']); ?></p>
-            <p><a href="mon_stage.php">Modifier mes informations</a></p>
-        </div>
-
-        <div style="background: #f8f9fa; padding: 15px; margin-bottom: 20px; border-radius: 4px; border: 1px solid #dee2e6;">
-            <h2>Mes comptes rendus</h2>
-            <form method="POST" style="margin-bottom: 15px;">
-                <label for="date_cr">Sélectionner une date :</label>
-                <input type="date" id="date_cr" name="date_cr" value="<?php echo $date_cr; ?>" required style="padding: 8px; margin: 10px 0; margin-right: 10px;">
-                
-                <?php if (!$show_cr_list): ?>
-                    <button type="submit" name="show_cr" style="background: #007bff; color: white; padding: 8px 15px; border: none; border-radius: 4px; cursor: pointer;">
-                        📋 Voir les CR de ce jour
-                    </button>
-                <?php else: ?>
-                    <button type="submit" name="hide_cr" style="background: #6c757d; color: white; padding: 8px 15px; border: none; border-radius: 4px; cursor: pointer;">
-                        ✕ Masquer
-                    </button>
-                <?php endif; ?>
-            </form>
-        </div>
-
-        <?php if ($show_cr_list && $liste_cr_result): ?>
-            <div style="background: #f8f9fa; padding: 15px; margin-bottom: 20px; border-radius: 4px; border: 1px solid #dee2e6;">
-                <?php if (mysqli_num_rows($liste_cr_result) > 0): ?>
-                    <h3>Comptes rendus du <?php echo formatDateFrench($date_cr); ?></h3>
-                    
-                    <?php while ($cr = mysqli_fetch_assoc($liste_cr_result)): ?>
-                        <div style="background: white; border: 1px solid #e0e0e0; padding: 15px; margin: 12px 0; border-radius: 4px;">
-                            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 10px;">
-                                <div>
-                                    <p><strong>Créé le :</strong> <?php echo formatDateTimeFrench($cr['datetime']); ?></p>
-                                    <p><strong>Statut :</strong> <?php echo $cr['vu'] == 1 ? "✅ Consulté" : "❌ Non consulté"; ?></p>
-                                </div>
-                            </div>
-                            
-                            <p><strong>Description :</strong></p>
-                            <p style="white-space: pre-wrap; line-height: 1.5; background: #f8f9fa; padding: 10px; border-radius: 4px; margin: 10px 0;">
-                                <?php echo htmlspecialchars($cr['description']); ?>
-                            </p>
-                            
-                            <?php 
-                            $pieces_jointes = getPiecesJointes($cr['num']);
-                            if (!empty($pieces_jointes)): ?>
-                                <p><strong>📎 Pièces jointes :</strong></p>
-                                <?php foreach ($pieces_jointes as $piece): ?>
-                                    <div style="background: #f0f0f0; padding: 8px; margin: 5px 0; border-radius: 4px; display: flex; justify-content: space-between; align-items: center;">
-                                        <span>📄 <?php echo htmlspecialchars($piece['nom_fichier']); ?> (<?php echo formaterTailleFichier($piece['taille']); ?>)</span>
-                                        <a href="telecharger.php?id=<?php echo $piece['id']; ?>" target="_blank" style="background: #007bff; color: white; padding: 5px 10px; text-decoration: none; border-radius: 4px; font-size: 12px;">
-                                            ⬇️ Télécharger
-                                        </a>
-                                    </div>
-                                <?php endforeach; ?>
-                            <?php endif; ?>
-                            
-                            <?php 
-                            $commentaires = getCommentaires($cr['num']);
-                            if (!empty($commentaires)): ?>
-                                <p style="margin-top: 15px;"><strong>💬 Commentaires (<?php echo count($commentaires); ?>) :</strong></p>
-                                <?php foreach ($commentaires as $commentaire): ?>
-                                    <div style="background: #e7f3ff; padding: 10px; margin: 8px 0; border-left: 3px solid #007bff; border-radius: 4px;">
-                                        <p style="margin: 0 0 5px 0;">
-                                            <strong><?php echo htmlspecialchars($commentaire['prenom'] . ' ' . $commentaire['nom']); ?></strong>
-                                            <span style="color: #999; font-size: 12px;">– <?php echo formatDateTimeFrench($commentaire['date_creation']); ?></span>
-                                        </p>
-                                        <p style="margin: 0; white-space: pre-wrap; line-height: 1.4;">
-                                            <?php echo htmlspecialchars($commentaire['commentaire']); ?>
-                                        </p>
-                                    </div>
-                                <?php endforeach; ?>
-                            <?php endif; ?>
-                        </div>
-                    <?php endwhile; ?>
-                <?php else: ?>
-                    <p style="color: #999; font-style: italic;">Aucun compte rendu pour le <?php echo formatDateFrench($date_cr); ?>.</p>
-                <?php endif; ?>
+        <?php if ($message): ?>
+            <div class="alert alert-success">
+                ✅ <?php echo $message; ?>
             </div>
         <?php endif; ?>
 
-        <div style="background: #f8f9fa; padding: 15px; border-radius: 4px; border: 1px solid #dee2e6;">
-            <h2>Créer un nouveau compte rendu</h2>
-            
-            <div style="background: #d1ecf1; color: #0c5460; padding: 12px; margin-bottom: 15px; border-radius: 4px; border-left: 4px solid #17a2b8;">
-                <strong>ℹ️ Information :</strong> Vous ne pouvez créer des comptes rendus que pour la date d'aujourd'hui (<?php echo formatDateFrench(date('Y-m-d')); ?>).
+        <?php if ($error): ?>
+            <div class="alert alert-danger">
+                ❌ <?php echo $error; ?>
             </div>
-            
-            <form method="POST" enctype="multipart/form-data">
-                <input type="hidden" name="date_cr" value="<?php echo date('Y-m-d'); ?>">
-                <input type="date" id="date_cr_display" value="<?php echo date('Y-m-d'); ?>" disabled style="padding: 8px; margin: 8px 0; border: 1px solid #ddd; border-radius: 4px; background-color: #f8f9fa;">
-                <span style="color: #666; font-style: italic;">(Date d'aujourd'hui - non modifiable)</span><br><br>
+        <?php endif; ?>
 
-                <label for="description">Descriptif <span style="color: red;">*</span></label><br>
-                <textarea id="description" name="description" rows="10" style="width: 100%; padding: 8px; margin: 8px 0; border: 1px solid #ddd; border-radius: 4px; font-family: Arial, sans-serif;" required><?php echo htmlspecialchars($description); ?></textarea><br><br>
+        <?php if (!$show_cr_form): ?>
+            <div class="alert alert-warning">
+                <h3>⚠️ Informations manquantes</h3>
+                <p>Avant de créer un compte rendu, vous devez compléter vos informations de stage et de tuteur.</p>
+                <p>Champs manquants :</p>
+                <ul>
+                    <?php if (!$stage_info || empty($stage_info['nom'])) echo "<li>Nom de l'entreprise</li>"; ?>
+                    <?php if (!$stage_info || empty($stage_info['adresse'])) echo "<li>Adresse du stage</li>"; ?>
+                    <?php if (!$stage_info || empty($stage_info['CP'])) echo "<li>Code postal</li>"; ?>
+                    <?php if (!$stage_info || empty($stage_info['ville'])) echo "<li>Ville</li>"; ?>
+                    <?php if (!$stage_info || empty($stage_info['tel'])) echo "<li>Téléphone de l'entreprise</li>"; ?>
+                    <?php if (!$stage_info || empty($stage_info['libelleStage'])) echo "<li>Libellé du stage</li>"; ?>
+                    <?php if (!$stage_info || empty($stage_info['email'])) echo "<li>Email de l'entreprise</li>"; ?>
+                    <?php if (!$stage_info || empty($stage_info['tuteur_nom'])) echo "<li>Nom du tuteur</li>"; ?>
+                    <?php if (!$stage_info || empty($stage_info['tuteur_prenom'])) echo "<li>Prénom du tuteur</li>"; ?>
+                    <?php if (!$stage_info || empty($stage_info['tuteur_tel'])) echo "<li>Téléphone du tuteur</li>"; ?>
+                    <?php if (!$stage_info || empty($stage_info['tuteur_email'])) echo "<li>Email du tuteur</li>"; ?>
+                </ul>
+                <p><a href="mon_stage.php" class="btn">
+                    ➜ Remplir mes informations de stage
+                </a></p>
+            </div>
+        <?php else: ?>
+            <div class="card">
+                <h3>✅ Vos informations de stage sont complètes</h3>
+                <p><strong>Entreprise :</strong> <?php echo htmlspecialchars($stage_info['nom']); ?></p>
+                <p><strong>Tuteur :</strong> <?php echo htmlspecialchars($stage_info['tuteur_prenom'] . ' ' . $stage_info['tuteur_nom']); ?></p>
+                <p><a href="mon_stage.php">Modifier mes informations</a></p>
+            </div>
 
-                <label for="pieces_jointes">Pièces jointes (max 10MB par fichier)</label><br>
-                <input type="file" id="pieces_jointes" name="pieces_jointes[]" multiple accept=".jpg,.jpeg,.png,.gif,.pdf,.doc,.docx" 
-                       onchange="verifierFichiers()" style="margin: 8px 0;">
-                
-                <div id="message_validation_fichiers" style="font-size: 14px; margin: 10px 0; padding: 10px; border-radius: 4px; background: #f8f9fa;"></div>
-                
-                <p style="font-size: 12px; color: #666;">Types autorisés : JPG, PNG, GIF, PDF, DOC, DOCX</p><br>
+            <div class="card">
+                <h2>Mes comptes rendus</h2>
+                <form method="POST" style="margin-bottom: 15px;">
+                    <label for="date_cr">Sélectionner une date :</label>
+                    <input type="date" id="date_cr" name="date_cr" value="<?php echo $date_cr; ?>" required style="padding: 8px; margin: 10px 0; margin-right: 10px;">
+                    
+                    <?php if (!$show_cr_list): ?>
+                        <button type="submit" name="show_cr" class="btn">
+                            📋 Voir les CR de ce jour
+                        </button>
+                    <?php else: ?>
+                        <button type="submit" name="hide_cr" class="btn btn-secondary">
+                            ✕ Masquer
+                        </button>
+                    <?php endif; ?>
+                </form>
+            </div>
 
-                <button type="submit" name="insérer" style="background: #28a745; color: white; padding: 12px 24px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 14px;">
-                    ✅ Créer le compte rendu
-                </button>
-            </form>
-        </div>
-    <?php endif; ?>
+            <?php if ($show_cr_list && $liste_cr_result): ?>
+                <div class="card">
+                    <h2>Comptes rendus du <?php echo formatDateFrench($date_cr); ?></h2>
+                    <?php if (mysqli_num_rows($liste_cr_result) > 0): ?>
+                        <table border="1" cellpadding="10" cellspacing="0" style="width: 100%; border-collapse: collapse;">
+                            <thead>
+                                <tr style="background: #f8f9fa;">
+                                    <th>Date et heure</th>
+                                    <th>Description</th>
+                                    <th>Statut</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php while ($cr = mysqli_fetch_assoc($liste_cr_result)): ?>
+                                    <tr>
+                                        <td><?php echo formatDateTimeFrench($cr['datetime']); ?></td>
+                                        <td><?php echo htmlspecialchars(substr($cr['description'], 0, 100)) . (strlen($cr['description']) > 100 ? '...' : ''); ?></td>
+                                        <td><?php echo $cr['vu'] ? '✅ Consulté' : '❌ Non consulté'; ?></td>
+                                        <td>
+                                            <a href="liste_cr.php?detail=<?php echo $cr['num']; ?>" class="btn" style="font-size: 12px;">
+                                                Voir détails
+                                            </a>
+                                        </td>
+                                    </tr>
+                                <?php endwhile; ?>
+                            </tbody>
+                        </table>
+                    <?php else: ?>
+                        <p>Aucun compte rendu trouvé pour cette date.</p>
+                    <?php endif; ?>
+                </div>
+            <?php endif; ?>
+
+            <div class="card">
+                <h2>📋 Modèles de comptes rendus disponibles</h2>
+                <p style="margin-bottom: 20px; color: #555;">
+                    <strong>💡 Conseil :</strong> Utilisez un modèle pour démarrer rapidement votre compte rendu. 
+                    Le modèle vous fournira une structure et des indications sur ce que vous devez remplir.
+                </p>
+                <?php if (mysqli_num_rows($modeles_result) > 0): ?>
+                    <div class="modele-list">
+                        <?php while ($modele = mysqli_fetch_assoc($modeles_result)): ?>
+                            <div class="modele-card" onclick="chargerModele(<?php echo $modele['id']; ?>)">
+                                <div class="modele-title">📄 <?php echo htmlspecialchars($modele['titre']); ?></div>
+                                <div class="modele-description"><?php echo htmlspecialchars($modele['description']); ?></div>
+                                <button class="btn" style="font-size: 12px;">Utiliser ce modèle</button>
+                            </div>
+                        <?php endwhile; ?>
+                    </div>
+                <?php else: ?>
+                    <p>Aucun modèle de compte rendu disponible pour le moment.</p>
+                <?php endif; ?>
+            </div>
+
+            <div class="card">
+                <h2>✏️ Créer un nouveau compte rendu</h2>
+                <?php if (!empty($contenu_html)): ?>
+                    <div class="alert alert-success" style="background-color: #e8f5e9; border: 1px solid #4caf50;">
+                        ✅ Modèle chargé ! Complétez le contenu ci-dessous en suivant la structure proposée.
+                    </div>
+                <?php endif; ?>
+                <form method="POST" enctype="multipart/form-data">
+                    <input type="hidden" name="date_cr" value="<?php echo $date_cr; ?>">
+                    
+                    <div class="form-group">
+                        <label for="description">Titre du compte rendu *</label>
+                        <input type="text" id="description" name="description" class="form-control" required value="<?php echo htmlspecialchars($description); ?>" placeholder="Ex: Compte rendu du 15 janvier 2025">
+                        <small style="color: #666;">Donnez un titre descriptif à votre compte rendu.</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="contenu_html">Contenu du compte rendu *</label>
+                        <textarea id="contenu_html" name="contenu_html" class="form-control"><?php echo htmlspecialchars($contenu_html); ?></textarea>
+                        <small style="color: #666;">
+                            Écrivez le contenu de votre compte rendu. 
+                            <?php if (!empty($contenu_html)): ?>
+                                Vous pouvez modifier le modèle chargé selon vos activités.
+                            <?php else: ?>
+                                Vous pouvez aussi charger un modèle ci-dessus pour vous guider.
+                            <?php endif; ?>
+                        </small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="pieces_jointes">Pièces jointes (facultatif)</label>
+                        <input type="file" id="pieces_jointes" name="pieces_jointes[]" multiple onchange="verifierFichiers()">
+                        <div id="message_validation_fichiers" style="margin-top: 10px; font-size: 14px;"></div>
+                        <small style="color: #666;">
+                            Types de fichiers autorisés : JPG, PNG, GIF, PDF, DOC, DOCX<br>
+                            Taille maximale : <?php echo formaterTailleFichier($taille_max_fichier); ?>
+                        </small>
+                    </div>
+                    
+                    <div style="text-align: right; margin-top: 20px;">
+                        <button type="submit" name="insérer" class="btn btn-success">
+                            Créer le compte rendu
+                        </button>
+                    </div>
+                </form>
+            </div>
+        <?php endif; ?>
+    </div>
 </body>
 </html>
