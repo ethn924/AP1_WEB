@@ -201,7 +201,8 @@ if (isset($_GET['success']) && $_GET['success'] == 1) {
         <div class="header">
             <h1>Gestion des modèles de comptes rendus</h1>
             <div>
-                <a href="tableau_bord_prof.php" class="btn btn-secondary">Retour au tableau de bord</a>
+                <a href="accueil.php" class="btn btn-secondary">← Accueil</a>
+                <a href="tableau_bord_prof.php" class="btn btn-secondary">📊 Tableau de bord</a>
             </div>
         </div>
         
@@ -277,6 +278,7 @@ if (isset($_GET['success']) && $_GET['success'] == 1) {
                         </div>
                         <div class="modele-actions">
                             <a href="gestion_modeles.php?edit=<?php echo $modele_item['id']; ?>" class="btn">Modifier</a>
+                            <a href="gestion_modeles_checklists.php?id=<?php echo $modele_item['id']; ?>" class="btn">Gérer Checklist</a>
                             <a href="gestion_modeles.php?delete=<?php echo $modele_item['id']; ?>" class="btn btn-danger" 
                                onclick="return confirm('Êtes-vous sûr de vouloir supprimer ce modèle ?');">Supprimer</a>
                         </div>

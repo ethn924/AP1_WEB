@@ -21,6 +21,228 @@ SET time_zone = "+00:00";
 -- Base de données : `ap1_ethan_2025`
 --
 
+-- ========================================
+-- NOUVELLES TABLES POUR LES 11 FONCTIONNALITÉS
+-- ========================================
+
+-- --------------------------------------------------------
+
+--
+-- Structure de la table `groupes` (Gestion des groupes/classes)
+--
+
+DROP TABLE IF EXISTS `groupes`;
+CREATE TABLE IF NOT EXISTS `groupes` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `nom` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+  `professeur_responsable_id` int NOT NULL,
+  `date_creation` datetime DEFAULT CURRENT_TIMESTAMP,
+  `actif` tinyint(1) DEFAULT '1',
+  PRIMARY KEY (`id`),
+  KEY `professeur_responsable_id` (`professeur_responsable_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Structure de la table `membres_groupe` (Assignation aux groupes)
+--
+
+DROP TABLE IF EXISTS `membres_groupe`;
+CREATE TABLE IF NOT EXISTS `membres_groupe` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `groupe_id` int NOT NULL,
+  `utilisateur_id` int NOT NULL,
+  `date_ajout` datetime DEFAULT CURRENT_TIMESTAMP,
+  `statut` varchar(50) DEFAULT 'actif',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `groupe_utilisateur` (`groupe_id`, `utilisateur_id`),
+  KEY `groupe_id` (`groupe_id`),
+  KEY `utilisateur_id` (`utilisateur_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Structure de la table `statuts_cr` (Flux d'approbation structuré)
+--
+
+DROP TABLE IF EXISTS `statuts_cr`;
+CREATE TABLE IF NOT EXISTS `statuts_cr` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `cr_id` bigint NOT NULL,
+  `statut` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'brouillon',
+  `date_soumission` datetime DEFAULT NULL,
+  `date_evaluation` datetime DEFAULT NULL,
+  `date_approbation` datetime DEFAULT NULL,
+  `date_limite_soumission` datetime DEFAULT NULL,
+  `professeur_evaluateur_id` int DEFAULT NULL,
+  `notes_evaluation` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+  `feedback_general` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+  `date_modification_statut` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `cr_id` (`cr_id`),
+  KEY `professeur_evaluateur_id` (`professeur_evaluateur_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Structure de la table `versions_cr` (Gestion des versions)
+--
+
+DROP TABLE IF EXISTS `versions_cr`;
+CREATE TABLE IF NOT EXISTS `versions_cr` (
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `cr_id` bigint NOT NULL,
+  `numero_version` int NOT NULL,
+  `titre` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+  `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+  `contenu_html` LONGTEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+  `utilisateur_id` int NOT NULL,
+  `date_creation` datetime DEFAULT CURRENT_TIMESTAMP,
+  `note_version` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+  `restaurable` tinyint(1) DEFAULT '1',
+  PRIMARY KEY (`id`),
+  KEY `cr_id` (`cr_id`),
+  KEY `utilisateur_id` (`utilisateur_id`),
+  KEY `date_creation` (`date_creation`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Structure de la table `checklists_modeles` (Validation et Checklist)
+--
+
+DROP TABLE IF EXISTS `checklists_modeles`;
+CREATE TABLE IF NOT EXISTS `checklists_modeles` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `modele_id` int NOT NULL,
+  `item_texte` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `ordre` int NOT NULL,
+  `obligatoire` tinyint(1) DEFAULT '1',
+  `description_aide` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+  `date_creation` datetime DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `modele_id` (`modele_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Structure de la table `validations_cr` (Validation d'un CR)
+--
+
+DROP TABLE IF EXISTS `validations_cr`;
+CREATE TABLE IF NOT EXISTS `validations_cr` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `cr_id` bigint NOT NULL,
+  `checklist_item_id` int NOT NULL,
+  `complete` tinyint(1) DEFAULT '0',
+  `commentaire` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+  `date_verification` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `cr_item` (`cr_id`, `checklist_item_id`),
+  KEY `cr_id` (`cr_id`),
+  KEY `checklist_item_id` (`checklist_item_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Structure de la table `sauvegardes_auto` (Sauvegarde automatique)
+--
+
+DROP TABLE IF EXISTS `sauvegardes_auto`;
+CREATE TABLE IF NOT EXISTS `sauvegardes_auto` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `cr_id` bigint NOT NULL,
+  `utilisateur_id` int NOT NULL,
+  `contenu_html` LONGTEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+  `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+  `date_sauvegarde` datetime DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `cr_id` (`cr_id`),
+  KEY `utilisateur_id` (`utilisateur_id`),
+  KEY `date_sauvegarde` (`date_sauvegarde`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Structure de la table `archives_cr` (Archivage)
+--
+
+DROP TABLE IF EXISTS `archives_cr`;
+CREATE TABLE IF NOT EXISTS `archives_cr` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `cr_id` bigint NOT NULL,
+  `utilisateur_id` int NOT NULL,
+  `raison_archivage` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+  `date_archivage` datetime DEFAULT CURRENT_TIMESTAMP,
+  `archivable` tinyint(1) DEFAULT '1',
+  PRIMARY KEY (`id`),
+  KEY `cr_id` (`cr_id`),
+  KEY `utilisateur_id` (`utilisateur_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Structure de la table `rappels_soumission` (Rappels et échéances)
+--
+
+DROP TABLE IF EXISTS `rappels_soumission`;
+CREATE TABLE IF NOT EXISTS `rappels_soumission` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `groupe_id` int NOT NULL,
+  `date_limite` datetime NOT NULL,
+  `titre` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+  `professeur_id` int NOT NULL,
+  `date_creation` datetime DEFAULT CURRENT_TIMESTAMP,
+  `actif` tinyint(1) DEFAULT '1',
+  PRIMARY KEY (`id`),
+  KEY `groupe_id` (`groupe_id`),
+  KEY `professeur_id` (`professeur_id`),
+  KEY `date_limite` (`date_limite`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Structure de la table `analytics_cr` (Analytics détaillées)
+--
+
+DROP TABLE IF EXISTS `analytics_cr`;
+CREATE TABLE IF NOT EXISTS `analytics_cr` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `groupe_id` int DEFAULT NULL,
+  `mois` varchar(7) NOT NULL,
+  `total_cr` int DEFAULT '0',
+  `cr_soumis` int DEFAULT '0',
+  `cr_evalues` int DEFAULT '0',
+  `cr_approuves` int DEFAULT '0',
+  `taux_soumission` decimal(5,2) DEFAULT '0.00',
+  `taux_evaluation` decimal(5,2) DEFAULT '0.00',
+  `delai_moyen_evaluation` decimal(10,2) DEFAULT '0.00',
+  `date_calcul` datetime DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `groupe_mois` (`groupe_id`, `mois`),
+  KEY `groupe_id` (`groupe_id`),
+  KEY `mois` (`mois`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ========================================
+-- FIN DES NOUVELLES TABLES
+-- ========================================
+
+-- ========================================
+-- TABLES EXISTANTES (AVEC MODIFICATIONS)
+-- ========================================
+
 -- --------------------------------------------------------
 
 --
@@ -42,7 +264,7 @@ CREATE TABLE IF NOT EXISTS `commentaires` (
 -- --------------------------------------------------------
 
 --
--- Structure de la table `cr`
+-- Structure de la table `cr` (avec colonnes ajoutées pour les nouvelles fonctionnalités)
 --
 
 DROP TABLE IF EXISTS `cr`;
@@ -50,12 +272,17 @@ CREATE TABLE IF NOT EXISTS `cr` (
   `num` bigint NOT NULL AUTO_INCREMENT,
   `date` date DEFAULT NULL,
   `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+  `titre` varchar(255) DEFAULT NULL,
   `contenu_html` LONGTEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
   `vu` tinyint(1) DEFAULT '0',
+  `archivé` tinyint(1) DEFAULT '0',
   `datetime` datetime DEFAULT NULL,
+  `num_version` int DEFAULT 1,
   `num_utilisateur` int DEFAULT NULL,
+  `groupe_id` int DEFAULT NULL,
   PRIMARY KEY (`num`),
-  KEY `num_utilisateur` (`num_utilisateur`)
+  KEY `num_utilisateur` (`num_utilisateur`),
+  KEY `groupe_id` (`groupe_id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
@@ -340,10 +567,76 @@ ALTER TABLE `pieces_jointes`
   ADD CONSTRAINT `pieces_jointes_ibfk_1` FOREIGN KEY (`cr_id`) REFERENCES `cr` (`num`) ON DELETE CASCADE;
 
 --
--- Contraintes pour la table `modeles_cr`
+-- NOTE: Contrainte pour la table `modeles_cr` déjà créée ligne 519 via PREPARE/EXECUTE
 --
-ALTER TABLE `modeles_cr`
-  ADD CONSTRAINT `modeles_cr_ibfk_1` FOREIGN KEY (`professeur_id`) REFERENCES `utilisateur` (`num`) ON DELETE CASCADE;
+
+--
+-- Contraintes pour la table `groupes`
+--
+ALTER TABLE `groupes`
+  ADD CONSTRAINT `groupes_ibfk_1` FOREIGN KEY (`professeur_responsable_id`) REFERENCES `utilisateur` (`num`) ON DELETE CASCADE;
+
+--
+-- Contraintes pour la table `membres_groupe`
+--
+ALTER TABLE `membres_groupe`
+  ADD CONSTRAINT `membres_groupe_ibfk_1` FOREIGN KEY (`groupe_id`) REFERENCES `groupes` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `membres_groupe_ibfk_2` FOREIGN KEY (`utilisateur_id`) REFERENCES `utilisateur` (`num`) ON DELETE CASCADE;
+
+--
+-- Contraintes pour la table `statuts_cr`
+--
+ALTER TABLE `statuts_cr`
+  ADD CONSTRAINT `statuts_cr_ibfk_1` FOREIGN KEY (`cr_id`) REFERENCES `cr` (`num`) ON DELETE CASCADE,
+  ADD CONSTRAINT `statuts_cr_ibfk_2` FOREIGN KEY (`professeur_evaluateur_id`) REFERENCES `utilisateur` (`num`) ON DELETE SET NULL;
+
+--
+-- Contraintes pour la table `versions_cr`
+--
+ALTER TABLE `versions_cr`
+  ADD CONSTRAINT `versions_cr_ibfk_1` FOREIGN KEY (`cr_id`) REFERENCES `cr` (`num`) ON DELETE CASCADE,
+  ADD CONSTRAINT `versions_cr_ibfk_2` FOREIGN KEY (`utilisateur_id`) REFERENCES `utilisateur` (`num`) ON DELETE CASCADE;
+
+--
+-- Contraintes pour la table `checklists_modeles`
+--
+ALTER TABLE `checklists_modeles`
+  ADD CONSTRAINT `checklists_modeles_ibfk_1` FOREIGN KEY (`modele_id`) REFERENCES `modeles_cr` (`id`) ON DELETE CASCADE;
+
+--
+-- Contraintes pour la table `validations_cr`
+--
+ALTER TABLE `validations_cr`
+  ADD CONSTRAINT `validations_cr_ibfk_1` FOREIGN KEY (`cr_id`) REFERENCES `cr` (`num`) ON DELETE CASCADE,
+  ADD CONSTRAINT `validations_cr_ibfk_2` FOREIGN KEY (`checklist_item_id`) REFERENCES `checklists_modeles` (`id`) ON DELETE CASCADE;
+
+--
+-- Contraintes pour la table `sauvegardes_auto`
+--
+ALTER TABLE `sauvegardes_auto`
+  ADD CONSTRAINT `sauvegardes_auto_ibfk_1` FOREIGN KEY (`cr_id`) REFERENCES `cr` (`num`) ON DELETE CASCADE,
+  ADD CONSTRAINT `sauvegardes_auto_ibfk_2` FOREIGN KEY (`utilisateur_id`) REFERENCES `utilisateur` (`num`) ON DELETE CASCADE;
+
+--
+-- Contraintes pour la table `archives_cr`
+--
+ALTER TABLE `archives_cr`
+  ADD CONSTRAINT `archives_cr_ibfk_1` FOREIGN KEY (`cr_id`) REFERENCES `cr` (`num`) ON DELETE CASCADE,
+  ADD CONSTRAINT `archives_cr_ibfk_2` FOREIGN KEY (`utilisateur_id`) REFERENCES `utilisateur` (`num`) ON DELETE CASCADE;
+
+--
+-- Contraintes pour la table `rappels_soumission`
+--
+ALTER TABLE `rappels_soumission`
+  ADD CONSTRAINT `rappels_soumission_ibfk_1` FOREIGN KEY (`groupe_id`) REFERENCES `groupes` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `rappels_soumission_ibfk_2` FOREIGN KEY (`professeur_id`) REFERENCES `utilisateur` (`num`) ON DELETE CASCADE;
+
+--
+-- Contraintes pour la table `analytics_cr`
+--
+ALTER TABLE `analytics_cr`
+  ADD CONSTRAINT `analytics_cr_ibfk_1` FOREIGN KEY (`groupe_id`) REFERENCES `groupes` (`id`) ON DELETE SET NULL;
+
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

@@ -160,7 +160,7 @@ if (isset($_GET['view']) && !empty($_GET['view'])) {
 </head>
 <body>
     <h1>📋 Comptes rendus des élèves</h1>
-    <p><a href="accueil.php">← Retour à l'accueil</a></p>
+    <p><a href="accueil.php">← Retour à l'accueil</a> | <a href="tableau_bord_prof.php">📊 Tableau de bord</a></p>
 
     <!-- Barre de recherche -->
     <div style="background: #f8f9fa; padding: 15px; border-radius: 4px; margin-bottom: 20px;">

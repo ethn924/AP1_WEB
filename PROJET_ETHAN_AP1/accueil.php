@@ -21,7 +21,7 @@ if (isset($_POST['send_con'])) {
         $user = mysqli_fetch_assoc($result);
         
         // Vérifier le mot de passe avec MD5
-        $password_valid = isset($user['mdp']) && ($user['mdp'] === md5($motdepasse));
+        $password_valid = isset($user['motdepasse']) && ($user['motdepasse'] === md5($motdepasse));
         
         if ($password_valid) {
             // Vérifier si l'email est vérifié
@@ -53,95 +53,9 @@ if (isset($_POST['deco'])) {
     exit();
 }
 
-// Initialiser les variables du dashboard
-$stats_eleve = null;
-$commentaires_result = null;
-$derniers_cr_result = null;
-$stats_prof = null;
-$cr_recents_result = null;
-$eleves_actifs_result = null;
-$cr_non_vus_result = null;
-$modeles_result = null;
-$notifications = [];
-
-// Si l'utilisateur est connecté, charger les données du dashboard
+// Si l'utilisateur est connecté, charger les notifications
 if (isset($_SESSION['Sid'])) {
     $notifications = getNotificationsNonLues($_SESSION['Sid']);
-    
-    // Récupérer les données pour le tableau de bord
-    if ($_SESSION['Stype'] == 0) {
-        // Récupération des statistiques des CR pour élève
-        $stats_query = "SELECT 
-                        COUNT(*) as total_cr,
-                        SUM(CASE WHEN vu = 1 THEN 1 ELSE 0 END) as cr_vus,
-                        SUM(CASE WHEN vu = 0 THEN 1 ELSE 0 END) as cr_non_vus,
-                        MAX(datetime) as dernier_cr
-                        FROM cr 
-                        WHERE num_utilisateur = {$_SESSION['Sid']}";
-        $stats_eleve_result = mysqli_query($bdd, $stats_query);
-        $stats_eleve = mysqli_fetch_assoc($stats_eleve_result);
-        
-        // Récupération des derniers commentaires reçus
-        $commentaires_query = "SELECT c.*, cr.description as cr_description, u.nom, u.prenom 
-                              FROM commentaires c 
-                              JOIN cr ON c.cr_id = cr.num 
-                              JOIN utilisateur u ON c.professeur_id = u.num 
-                              WHERE cr.num_utilisateur = {$_SESSION['Sid']} 
-                              ORDER BY c.date_creation DESC 
-                              LIMIT 5";
-        $commentaires_result = mysqli_query($bdd, $commentaires_query);
-        
-        // Récupération des derniers CR
-        $derniers_cr_query = "SELECT * FROM cr 
-                             WHERE num_utilisateur = {$_SESSION['Sid']} 
-                             ORDER BY datetime DESC 
-                             LIMIT 5";
-        $derniers_cr_result = mysqli_query($bdd, $derniers_cr_query);
-    } else {
-        // Récupération des statistiques globales pour professeur
-        $stats_prof_query = "SELECT 
-                        COUNT(*) as total_cr,
-                        SUM(CASE WHEN vu = 1 THEN 1 ELSE 0 END) as cr_vus,
-                        SUM(CASE WHEN vu = 0 THEN 1 ELSE 0 END) as cr_non_vus,
-                        COUNT(DISTINCT num_utilisateur) as nb_eleves_actifs
-                        FROM cr";
-        $stats_prof_result = mysqli_query($bdd, $stats_prof_query);
-        $stats_prof = mysqli_fetch_assoc($stats_prof_result);
-        
-        // Récupération des CR récents
-        $cr_recents_query = "SELECT cr.*, u.nom, u.prenom 
-                            FROM cr 
-                            JOIN utilisateur u ON cr.num_utilisateur = u.num 
-                            ORDER BY cr.datetime DESC 
-                            LIMIT 10";
-        $cr_recents_result = mysqli_query($bdd, $cr_recents_query);
-        
-        // Récupération des élèves les plus actifs
-        $eleves_actifs_query = "SELECT u.num, u.nom, u.prenom, COUNT(cr.num) as nb_cr,
-                                MAX(cr.datetime) as dernier_cr
-                                FROM utilisateur u
-                                JOIN cr ON u.num = cr.num_utilisateur
-                                WHERE u.type = 0
-                                GROUP BY u.num
-                                ORDER BY nb_cr DESC, dernier_cr DESC
-                                LIMIT 5";
-        $eleves_actifs_result = mysqli_query($bdd, $eleves_actifs_query);
-        
-        // Récupération des CR non consultés
-        $cr_non_vus_query = "SELECT cr.*, u.nom, u.prenom 
-                             FROM cr 
-                             JOIN utilisateur u ON cr.num_utilisateur = u.num 
-                             WHERE cr.vu = 0 
-                             ORDER BY cr.datetime DESC 
-                             LIMIT 5";
-        $cr_non_vus_result = mysqli_query($bdd, $cr_non_vus_query);
-        
-        // Récupération des modèles de CR créés par le professeur
-        $modeles_query = "SELECT * FROM modeles_cr 
-                         WHERE professeur_id = {$_SESSION['Sid']} 
-                         ORDER BY date_creation DESC";
-        $modeles_result = mysqli_query($bdd, $modeles_query);
-    }
 }
 
 // Fonction pour formater les dates
@@ -464,179 +378,12 @@ function formatDateFrench($date) {
         <main>
             <h2>Bienvenue <?php echo htmlspecialchars($_SESSION['Sprenom']); ?> ! 👋</h2>
             
-            <?php if ($_SESSION['Stype'] == 0): ?>
-            <!-- Dashboard Élève -->
-            
-            <!-- Statistiques -->
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-label">Total de CR</div>
-                    <div class="stat-number"><?php echo $stats_eleve['total_cr'] ?? 0; ?></div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-label">CR Consultés</div>
-                    <div class="stat-number"><?php echo $stats_eleve['cr_vus'] ?? 0; ?></div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-label">CR Non consultés</div>
-                    <div class="stat-number"><?php echo $stats_eleve['cr_non_vus'] ?? 0; ?></div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-label">Dernier CR</div>
-                    <div class="stat-number" style="font-size: 14px;">
-                        <?php echo $stats_eleve['dernier_cr'] ? formatDateFrench($stats_eleve['dernier_cr']) : 'Aucun'; ?>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Derniers CR -->
-            <div class="section">
-                <h3>📄 Mes derniers comptes rendus</h3>
-                <?php if ($derniers_cr_result && mysqli_num_rows($derniers_cr_result) > 0): ?>
-                    <?php while ($cr = mysqli_fetch_assoc($derniers_cr_result)): ?>
-                    <div class="list-item">
-                        <div class="list-item-title"><?php echo htmlspecialchars($cr['description']); ?></div>
-                        <div class="list-item-meta">
-                            Créé le: <?php echo formatDateFrench($cr['datetime']); ?> | 
-                            Statut: <?php echo $cr['vu'] ? '✓ Consulté' : '✗ Non consulté'; ?>
-                        </div>
-                    </div>
-                    <?php endwhile; ?>
-                <?php else: ?>
-                    <p>Aucun compte rendu créé</p>
-                <?php endif; ?>
-            </div>
-            
-            <!-- Commentaires reçus -->
-            <div class="section">
-                <h3>💬 Derniers commentaires reçus</h3>
-                <?php if ($commentaires_result && mysqli_num_rows($commentaires_result) > 0): ?>
-                    <?php while ($com = mysqli_fetch_assoc($commentaires_result)): ?>
-                    <div class="list-item">
-                        <div class="list-item-title">
-                            <?php echo htmlspecialchars($com['nom'] . " " . $com['prenom']); ?> - 
-                            <?php echo htmlspecialchars($com['cr_description']); ?>
-                        </div>
-                        <div class="list-item-meta">
-                            <?php echo htmlspecialchars(substr($com['commentaire'], 0, 100)); ?>...
-                        </div>
-                    </div>
-                    <?php endwhile; ?>
-                <?php else: ?>
-                    <p>Aucun commentaire reçu</p>
-                <?php endif; ?>
-            </div>
-            
-            <?php else: ?>
-            <!-- Dashboard Professeur -->
-            
-            <!-- Statistiques -->
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-label">Total de CR</div>
-                    <div class="stat-number"><?php echo $stats_prof['total_cr'] ?? 0; ?></div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-label">CR Consultés</div>
-                    <div class="stat-number"><?php echo $stats_prof['cr_vus'] ?? 0; ?></div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-label">CR Non consultés</div>
-                    <div class="stat-number"><?php echo $stats_prof['cr_non_vus'] ?? 0; ?></div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-label">Élèves actifs</div>
-                    <div class="stat-number"><?php echo $stats_prof['nb_eleves_actifs'] ?? 0; ?></div>
-                </div>
-            </div>
-            
-            <!-- CR Récents -->
-            <div class="section">
-                <h3>📄 Comptes rendus récents</h3>
-                <?php if ($cr_recents_result && mysqli_num_rows($cr_recents_result) > 0): ?>
-                    <?php while ($cr = mysqli_fetch_assoc($cr_recents_result)): ?>
-                    <div class="list-item">
-                        <div class="list-item-title">
-                            <?php echo htmlspecialchars($cr['nom'] . " " . $cr['prenom']); ?> - 
-                            <?php echo htmlspecialchars($cr['description']); ?>
-                        </div>
-                        <div class="list-item-meta">
-                            <?php echo formatDateFrench($cr['datetime']); ?> | 
-                            <?php echo $cr['vu'] ? '✓ Consulté' : '✗ Non consulté'; ?>
-                        </div>
-                    </div>
-                    <?php endwhile; ?>
-                <?php else: ?>
-                    <p>Aucun compte rendu</p>
-                <?php endif; ?>
-            </div>
-            
-            <!-- Élèves actifs -->
-            <div class="section">
-                <h3>👥 Élèves les plus actifs</h3>
-                <?php if ($eleves_actifs_result && mysqli_num_rows($eleves_actifs_result) > 0): ?>
-                    <?php while ($eleve = mysqli_fetch_assoc($eleves_actifs_result)): ?>
-                    <div class="list-item">
-                        <div class="list-item-title">
-                            <?php echo htmlspecialchars($eleve['nom'] . " " . $eleve['prenom']); ?>
-                        </div>
-                        <div class="list-item-meta">
-                            <?php echo $eleve['nb_cr']; ?> CR | 
-                            Dernier CR: <?php echo formatDateFrench($eleve['dernier_cr']); ?>
-                        </div>
-                    </div>
-                    <?php endwhile; ?>
-                <?php else: ?>
-                    <p>Aucun élève actif</p>
-                <?php endif; ?>
-            </div>
-            
-            <!-- CR Non consultés -->
-            <div class="section">
-                <h3>⚠️ Comptes rendus non consultés</h3>
-                <?php if ($cr_non_vus_result && mysqli_num_rows($cr_non_vus_result) > 0): ?>
-                    <?php while ($cr = mysqli_fetch_assoc($cr_non_vus_result)): ?>
-                    <div class="list-item">
-                        <div class="list-item-title">
-                            <?php echo htmlspecialchars($cr['nom'] . " " . $cr['prenom']); ?> - 
-                            <?php echo htmlspecialchars($cr['description']); ?>
-                        </div>
-                        <div class="list-item-meta">
-                            <?php echo formatDateFrench($cr['datetime']); ?>
-                        </div>
-                    </div>
-                    <?php endwhile; ?>
-                <?php else: ?>
-                    <p>Aucun compte rendu en attente</p>
-                <?php endif; ?>
-            </div>
-            
-            <!-- Modèles de CR -->
-            <div class="section">
-                <h3>🎨 Mes modèles de comptes rendus</h3>
-                <?php if ($modeles_result && mysqli_num_rows($modeles_result) > 0): ?>
-                    <?php while ($modele = mysqli_fetch_assoc($modeles_result)): ?>
-                    <div class="list-item">
-                        <div class="list-item-title">
-                            <?php echo htmlspecialchars($modele['titre']); ?>
-                        </div>
-                        <div class="list-item-meta">
-                            Créé le: <?php echo formatDateFrench($modele['date_creation']); ?>
-                        </div>
-                    </div>
-                    <?php endwhile; ?>
-                <?php else: ?>
-                    <p>Aucun modèle créé</p>
-                <?php endif; ?>
-            </div>
-            
-            <?php endif; ?>
-            
             <!-- Menu de Navigation -->
             <div class="menu-section">
                 <?php if ($_SESSION['Stype'] == 0): ?>
                     <h3>Menu Élève</h3>
                     <ul>
+                        <li><a href="tableau_bord_eleve.php">📊 Tableau de bord</a></li>
                         <li><a href="liste_cr.php">Liste des comptes rendus</a></li>
                         <li><a href="editer_cr.php">Créer/modifier un compte rendu</a></li>
                         <li><a href="mon_stage.php">Informations de stage</a></li>
@@ -645,6 +392,7 @@ function formatDateFrench($date) {
                 <?php else: ?>
                     <h3>Menu Professeur</h3>
                     <ul>
+                        <li><a href="tableau_bord_prof.php">📊 Tableau de bord</a></li>
                         <li><a href="liste_eleves.php">Liste des élèves</a></li>
                         <li><a href="liste_cr_prof.php">Liste des comptes rendus</a></li>
                         <li><a href="gestion_modeles.php">Gestion des modèles</a></li>

@@ -163,6 +163,6 @@ if (isset($_POST['renvoyer_validation'])) {
         <button type="submit" name="update_password">Changer le mot de passe</button>
     </form>
     
-    <p><a href="accueil.php">Retour à l'accueil</a></p>
+    <p><a href="accueil.php">Retour à l'accueil</a> | <a href="<?php echo $_SESSION['Stype'] == 1 ? 'tableau_bord_prof.php' : 'tableau_bord_eleve.php'; ?>">📊 Tableau de bord</a></p>
 </body>
 </html>

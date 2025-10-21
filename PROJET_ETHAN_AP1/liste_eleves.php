@@ -112,6 +112,6 @@ $result = mysqli_query($bdd, $query);
         </div>
     <?php endif; ?>
 
-    <p><a href="accueil.php">Retour à l'accueil</a></p>
+    <p><a href="accueil.php">Retour à l'accueil</a> | <a href="tableau_bord_prof.php">📊 Tableau de bord</a></p>
 </body>
 </html>

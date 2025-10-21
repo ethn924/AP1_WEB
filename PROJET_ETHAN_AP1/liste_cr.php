@@ -48,7 +48,7 @@ if (isset($_GET['detail']) && !empty($_GET['detail'])) {
 </head>
 <body>
     <h1>Mes comptes rendus</h1>
-    <p><a href="accueil.php">← Retour à l'accueil</a></p>
+    <p><a href="accueil.php">← Retour à l'accueil</a> | <a href="tableau_bord_eleve.php">📊 Tableau de bord</a></p>
 
     <?php if (mysqli_num_rows($result) > 0): ?>
         <table border="1" cellpadding="10" cellspacing="0" style="width: 100%; margin-top: 20px;">

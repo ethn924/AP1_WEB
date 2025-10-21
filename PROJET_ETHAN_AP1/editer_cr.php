@@ -163,31 +163,279 @@ if ($show_cr_list) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Créer un compte rendu</title>
-    <!-- Inclusion de TinyMCE -->
-    <script src="https://cdn.tiny.cloud/1/no-api-key/tinymce/6/tinymce.min.js" referrerpolicy="origin"></script>
+    <!-- TinyMCE -->
+    <script src="https://cdn.tiny.cloud/1/5ze3f1mnixciatxizi78vap897rh0ctes5rqe20nbgof2t73/tinymce/7/tinymce.min.js"></script>
     <style>
-        /* Masquer l'alerte TinyMCE sur les clés API */
-        .tox-notification { display: none !important; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f7fa;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            padding: 25px;
+            margin-bottom: 20px;
+        }
+        
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #e0e0e0;
+            padding-bottom: 15px;
+        }
+        
+        .header h1 {
+            color: #333;
+            font-size: 28px;
+        }
+        
+        .back-btn {
+            background: #6c757d;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 4px;
+            text-decoration: none;
+            cursor: pointer;
+            border: none;
+            font-size: 14px;
+        }
+        
+        .back-btn:hover {
+            background: #5a6268;
+        }
+        
+        .alert {
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+        
+        .alert-success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .alert-danger {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .alert-warning {
+            background-color: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            font-family: Arial, sans-serif;
+        }
+        
+        .form-control:focus {
+            outline: none;
+            border-color: #007bff;
+            box-shadow: 0 0 5px rgba(0,123,255,0.5);
+        }
+        
+        textarea.form-control {
+            resize: vertical;
+            min-height: 80px;
+        }
+        
+        /* TinyMCE Custom Styling */
+        .tox-tinymce {
+            border-radius: 4px !important;
+            border: 1px solid #ddd !important;
+        }
+        
+        .tox .tox-toolbar {
+            background: #f8f9fa !important;
+        }
+        
+        /* Boutons d'action */
+        .form-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .btn-primary {
+            background: #007bff;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #0056b3;
+        }
+        
+        .btn-primary:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+        
+        /* Fichiers */
+        .file-section {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #ddd;
+        }
+        
+        .file-input-wrapper {
+            position: relative;
+            display: inline-block;
+        }
+        
+        .file-input-wrapper input[type="file"] {
+            display: none;
+        }
+        
+        .file-input-label {
+            background: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        
+        .file-input-label:hover {
+            background: #0056b3;
+        }
+        
+        #message_validation_fichiers {
+            margin-top: 10px;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+        
+        .list-modeles {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .modele-card {
+            background: #f8f9fa;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 15px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .modele-card:hover {
+            background: #e9ecef;
+            border-color: #007bff;
+            box-shadow: 0 2px 4px rgba(0,123,255,0.2);
+        }
+        
+        .modele-card h4 {
+            margin-bottom: 5px;
+            color: #333;
+        }
+        
+        .modele-card p {
+            font-size: 12px;
+            color: #666;
+        }
+        
+        .no-stage-warning {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 4px;
+            padding: 15px;
+            margin-bottom: 20px;
+            color: #856404;
+        }
     </style>
     <script>
+        // TinyMCE Configuration
         tinymce.init({
             selector: '#contenu_html',
+            language: 'fr_FR',
+            menubar: 'file edit view insert format tools',
+            toolbar: 'undo redo | formatselect fontsize | bold italic underline strikethrough | forecolor backcolor | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | link image table | removeformat help',
+            plugins: 'lists link image table code help',
+            font_sizes: '10px 12px 14px 16px 18px 20px 24px 28px',
             height: 400,
-            plugins: 'lists link image table code help wordcount',
-            toolbar: 'undo redo | formatselect | bold italic | alignleft aligncenter alignright | bullist numlist outdent indent | link image | table | code',
-            menubar: 'file edit view insert format tools table help',
-            content_style: 'body { font-family: Arial, sans-serif; font-size: 14px; }',
-            language: 'fr_FR'
+            min_height: 300,
+            content_style: 'body { font-family: Arial, sans-serif; font-size: 14px; line-height: 1.6; }',
+            branding: false,
+            promotion: false,
+            auto_focus: false,
+            setup: function(editor) {
+                editor.on('change', function() {
+                    // Sync textarea when content changes
+                    document.getElementById('contenu_html_input').value = editor.getContent();
+                });
+            }
         });
         
-        // Types de fichiers autorisés
-        const typesAutorises = <?php echo json_encode($types_autorises); ?>;
-        const tailleMaxFichier = <?php echo $taille_max_fichier; ?>;
+        function chargerModele(id) {
+            window.location.href = 'editer_cr.php?modele=' + id;
+        }
         
         function verifierFichiers() {
             const input = document.getElementById('pieces_jointes');
             const message = document.getElementById('message_validation_fichiers');
             const boutonSubmit = document.querySelector('button[name="insérer"]');
+            
+            const typesAutorises = <?php echo json_encode($types_autorises); ?>;
+            const tailleMaxFichier = <?php echo $taille_max_fichier; ?>;
+            
             let fichiersValides = true;
             let messageTexte = '';
             
@@ -195,21 +443,14 @@ if ($show_cr_list) {
                 for (let i = 0; i < input.files.length; i++) {
                     const fichier = input.files[i];
                     
-                    // Vérification de la taille
                     if (fichier.size > tailleMaxFichier) {
                         fichiersValides = false;
-                        messageTexte += `❌ ${fichier.name} : Trop volumineux (max ${formatTaille(tailleMaxFichier)})<br>`;
-                        continue;
-                    }
-                    
-                    // Vérification du type MIME
-                    if (!typesAutorises.includes(fichier.type)) {
+                        messageTexte += `❌ ${fichier.name} : Trop volumineux<br>`;
+                    } else if (!typesAutorises.includes(fichier.type)) {
                         fichiersValides = false;
-                        const extensions = getExtensionsFromMimeTypes();
                         messageTexte += `❌ ${fichier.name} : Type non autorisé<br>`;
-                        messageTexte += `Types autorisés : ${extensions}<br>`;
                     } else {
-                        messageTexte += `✅ ${fichier.name} : Type autorisé<br>`;
+                        messageTexte += `✅ ${fichier.name}<br>`;
                     }
                 }
             } else {
@@ -218,334 +459,130 @@ if ($show_cr_list) {
             
             message.innerHTML = messageTexte;
             
-            // Désactiver le bouton si fichiers invalides
             if (!fichiersValides) {
                 message.style.color = 'red';
                 boutonSubmit.disabled = true;
-                boutonSubmit.style.backgroundColor = '#6c757d';
-                boutonSubmit.title = 'Corrigez les erreurs de fichiers avant de soumettre';
+                boutonSubmit.style.backgroundColor = '#ccc';
             } else {
                 message.style.color = 'green';
                 boutonSubmit.disabled = false;
-                boutonSubmit.style.backgroundColor = '#28a745';
-                boutonSubmit.title = '';
+                boutonSubmit.style.backgroundColor = '#007bff';
             }
         }
         
-        function formatTaille(octets) {
-            const unites = ['o', 'Ko', 'Mo', 'Go'];
-            let puissance = 0;
-            
-            while (octets >= 1024 && puissance < unites.length - 1) {
-                octets /= 1024;
-                puissance++;
-            }
-            
-            return `${Math.round(octets * 100) / 100} ${unites[puissance]}`;
-        }
-        
-        function getExtensionsFromMimeTypes() {
-            const extensions = {
-                'image/jpeg': 'JPG, JPEG',
-                'image/png': 'PNG',
-                'image/gif': 'GIF',
-                'application/pdf': 'PDF',
-                'application/msword': 'DOC',
-                'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'DOCX'
-            };
-            
-            return Object.values(extensions).join(', ');
-        }
-        
-        // Vérifier les fichiers au chargement de la page si des fichiers sont déjà sélectionnés
         document.addEventListener('DOMContentLoaded', function() {
-            const input = document.getElementById('pieces_jointes');
-            if (input.files.length > 0) {
-                verifierFichiers();
+            // Sync hidden input before form submission
+            const form = document.querySelector('form');
+            if (form) {
+                form.addEventListener('submit', function() {
+                    if (tinymce.get('contenu_html')) {
+                        document.getElementById('contenu_html_input').value = tinymce.get('contenu_html').getContent();
+                    }
+                });
             }
         });
-        
-        // Fonction pour charger un modèle
-        function chargerModele(id) {
-            window.location.href = 'editer_cr.php?modele=' + id;
-        }
     </script>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            line-height: 1.6;
-            margin: 0;
-            padding: 20px;
-            background-color: #f5f5f5;
-        }
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-        .card {
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            padding: 20px;
-            margin-bottom: 20px;
-        }
-        .form-group {
-            margin-bottom: 20px;
-        }
-        .form-group label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: bold;
-        }
-        .form-control {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            font-size: 16px;
-        }
-        textarea.form-control {
-            min-height: 100px;
-        }
-        .btn {
-            display: inline-block;
-            background: #007bff;
-            color: white;
-            padding: 10px 15px;
-            text-decoration: none;
-            border-radius: 4px;
-            font-weight: bold;
-            border: none;
-            cursor: pointer;
-        }
-        .btn-secondary {
-            background: #6c757d;
-        }
-        .btn-success {
-            background: #28a745;
-        }
-        .alert {
-            padding: 15px;
-            border-radius: 4px;
-            margin-bottom: 20px;
-        }
-        .alert-success {
-            background-color: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-        }
-        .alert-danger {
-            background-color: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-        }
-        .alert-warning {
-            background-color: #fff3cd;
-            color: #856404;
-            border: 1px solid #ffeeba;
-        }
-        .modele-list {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 15px;
-            margin-bottom: 20px;
-        }
-        .modele-card {
-            background: #f8f9fa;
-            border: 1px solid #dee2e6;
-            border-radius: 4px;
-            padding: 15px;
-            width: calc(33.333% - 15px);
-            min-width: 250px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-        .modele-card:hover {
-            background: #e9ecef;
-            border-color: #adb5bd;
-        }
-        .modele-title {
-            font-weight: bold;
-            margin-bottom: 10px;
-        }
-        .modele-description {
-            color: #6c757d;
-            font-size: 14px;
-            margin-bottom: 15px;
-        }
-        h2 {
-            color: #333;
-            border-bottom: 2px solid #eee;
-            padding-bottom: 10px;
-            margin-top: 30px;
-        }
-    </style>
 </head>
 <body>
     <div class="container">
-        <h1>Créer un compte rendu</h1>
-        <p><a href="accueil.php">← Retour à l'accueil</a> | <a href="tableau_bord_eleve.php">Tableau de bord</a></p>
+        <div class="header">
+            <h1>📝 Créer un compte rendu</h1>
+            <a href="accueil.php" class="back-btn">← Retour</a>
+        </div>
 
-        <?php if ($message): ?>
-            <div class="alert alert-success">
-                ✅ <?php echo $message; ?>
-            </div>
+        <?php if (!empty($message)): ?>
+            <div class="alert alert-success"><?php echo $message; ?></div>
         <?php endif; ?>
-
-        <?php if ($error): ?>
-            <div class="alert alert-danger">
-                ❌ <?php echo $error; ?>
-            </div>
+        
+        <?php if (!empty($error)): ?>
+            <div class="alert alert-danger"><?php echo $error; ?></div>
         <?php endif; ?>
 
         <?php if (!$show_cr_form): ?>
-            <div class="alert alert-warning">
-                <h3>⚠️ Informations manquantes</h3>
-                <p>Avant de créer un compte rendu, vous devez compléter vos informations de stage et de tuteur.</p>
-                <p>Champs manquants :</p>
-                <ul>
-                    <?php if (!$stage_info || empty($stage_info['nom'])) echo "<li>Nom de l'entreprise</li>"; ?>
-                    <?php if (!$stage_info || empty($stage_info['adresse'])) echo "<li>Adresse du stage</li>"; ?>
-                    <?php if (!$stage_info || empty($stage_info['CP'])) echo "<li>Code postal</li>"; ?>
-                    <?php if (!$stage_info || empty($stage_info['ville'])) echo "<li>Ville</li>"; ?>
-                    <?php if (!$stage_info || empty($stage_info['tel'])) echo "<li>Téléphone de l'entreprise</li>"; ?>
-                    <?php if (!$stage_info || empty($stage_info['libelleStage'])) echo "<li>Libellé du stage</li>"; ?>
-                    <?php if (!$stage_info || empty($stage_info['email'])) echo "<li>Email de l'entreprise</li>"; ?>
-                    <?php if (!$stage_info || empty($stage_info['tuteur_nom'])) echo "<li>Nom du tuteur</li>"; ?>
-                    <?php if (!$stage_info || empty($stage_info['tuteur_prenom'])) echo "<li>Prénom du tuteur</li>"; ?>
-                    <?php if (!$stage_info || empty($stage_info['tuteur_tel'])) echo "<li>Téléphone du tuteur</li>"; ?>
-                    <?php if (!$stage_info || empty($stage_info['tuteur_email'])) echo "<li>Email du tuteur</li>"; ?>
-                </ul>
-                <p><a href="mon_stage.php" class="btn">
-                    ➜ Remplir mes informations de stage
-                </a></p>
+            <div class="card no-stage-warning">
+                <strong>⚠️ Information incomplète</strong><br>
+                Veuillez d'abord compléter votre profil (stage, tuteur, etc.) avant de créer un compte rendu.
+                <br><a href="perso.php">Compléter mon profil →</a>
             </div>
         <?php else: ?>
             <div class="card">
-                <h3>✅ Vos informations de stage sont complètes</h3>
-                <p><strong>Entreprise :</strong> <?php echo htmlspecialchars($stage_info['nom']); ?></p>
-                <p><strong>Tuteur :</strong> <?php echo htmlspecialchars($stage_info['tuteur_prenom'] . ' ' . $stage_info['tuteur_nom']); ?></p>
-                <p><a href="mon_stage.php">Modifier mes informations</a></p>
-            </div>
-
-            <div class="card">
-                <h2>Mes comptes rendus</h2>
-                <form method="POST" style="margin-bottom: 15px;">
-                    <label for="date_cr">Sélectionner une date :</label>
-                    <input type="date" id="date_cr" name="date_cr" value="<?php echo $date_cr; ?>" required style="padding: 8px; margin: 10px 0; margin-right: 10px;">
-                    
-                    <?php if (!$show_cr_list): ?>
-                        <button type="submit" name="show_cr" class="btn">
-                            📋 Voir les CR de ce jour
-                        </button>
-                    <?php else: ?>
-                        <button type="submit" name="hide_cr" class="btn btn-secondary">
-                            ✕ Masquer
-                        </button>
-                    <?php endif; ?>
-                </form>
-            </div>
-
-            <?php if ($show_cr_list && $liste_cr_result): ?>
-                <div class="card">
-                    <h2>Comptes rendus du <?php echo formatDateFrench($date_cr); ?></h2>
-                    <?php if (mysqli_num_rows($liste_cr_result) > 0): ?>
-                        <table border="1" cellpadding="10" cellspacing="0" style="width: 100%; border-collapse: collapse;">
-                            <thead>
-                                <tr style="background: #f8f9fa;">
-                                    <th>Date et heure</th>
-                                    <th>Description</th>
-                                    <th>Statut</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <?php while ($cr = mysqli_fetch_assoc($liste_cr_result)): ?>
-                                    <tr>
-                                        <td><?php echo formatDateTimeFrench($cr['datetime']); ?></td>
-                                        <td><?php echo htmlspecialchars(substr($cr['description'], 0, 100)) . (strlen($cr['description']) > 100 ? '...' : ''); ?></td>
-                                        <td><?php echo $cr['vu'] ? '✅ Consulté' : '❌ Non consulté'; ?></td>
-                                        <td>
-                                            <a href="liste_cr.php?detail=<?php echo $cr['num']; ?>" class="btn" style="font-size: 12px;">
-                                                Voir détails
-                                            </a>
-                                        </td>
-                                    </tr>
-                                <?php endwhile; ?>
-                            </tbody>
-                        </table>
-                    <?php else: ?>
-                        <p>Aucun compte rendu trouvé pour cette date.</p>
-                    <?php endif; ?>
-                </div>
-            <?php endif; ?>
-
-            <div class="card">
-                <h2>📋 Modèles de comptes rendus disponibles</h2>
-                <p style="margin-bottom: 20px; color: #555;">
-                    <strong>💡 Conseil :</strong> Utilisez un modèle pour démarrer rapidement votre compte rendu. 
-                    Le modèle vous fournira une structure et des indications sur ce que vous devez remplir.
-                </p>
+                <h2>Sélectionner un modèle (optionnel)</h2>
                 <?php if (mysqli_num_rows($modeles_result) > 0): ?>
-                    <div class="modele-list">
+                    <div class="list-modeles">
                         <?php while ($modele = mysqli_fetch_assoc($modeles_result)): ?>
                             <div class="modele-card" onclick="chargerModele(<?php echo $modele['id']; ?>)">
-                                <div class="modele-title">📄 <?php echo htmlspecialchars($modele['titre']); ?></div>
-                                <div class="modele-description"><?php echo htmlspecialchars($modele['description']); ?></div>
-                                <button class="btn" style="font-size: 12px;">Utiliser ce modèle</button>
+                                <h4><?php echo htmlspecialchars($modele['titre']); ?></h4>
+                                <p><?php echo htmlspecialchars(substr($modele['description'], 0, 100)) . '...'; ?></p>
                             </div>
                         <?php endwhile; ?>
                     </div>
                 <?php else: ?>
-                    <p>Aucun modèle de compte rendu disponible pour le moment.</p>
+                    <p>Aucun modèle disponible</p>
                 <?php endif; ?>
             </div>
 
-            <div class="card">
-                <h2>✏️ Créer un nouveau compte rendu</h2>
-                <?php if (!empty($contenu_html)): ?>
-                    <div class="alert alert-success" style="background-color: #e8f5e9; border: 1px solid #4caf50;">
-                        ✅ Modèle chargé ! Complétez le contenu ci-dessous en suivant la structure proposée.
-                    </div>
-                <?php endif; ?>
-                <form method="POST" enctype="multipart/form-data">
-                    <input type="hidden" name="date_cr" value="<?php echo $date_cr; ?>">
-                    
+            <form method="POST" enctype="multipart/form-data">
+                <div class="card">
                     <div class="form-group">
-                        <label for="description">Titre du compte rendu *</label>
-                        <input type="text" id="description" name="description" class="form-control" required value="<?php echo htmlspecialchars($description); ?>" placeholder="Ex: Compte rendu du 15 janvier 2025">
-                        <small style="color: #666;">Donnez un titre descriptif à votre compte rendu.</small>
+                        <label for="date_cr">Date du compte rendu</label>
+                        <input type="date" id="date_cr" name="date_cr" class="form-control" value="<?php echo $date_cr; ?>" readonly>
                     </div>
-                    
+
                     <div class="form-group">
-                        <label for="contenu_html">Contenu du compte rendu *</label>
-                        <textarea id="contenu_html" name="contenu_html" class="form-control"><?php echo htmlspecialchars($contenu_html); ?></textarea>
-                        <small style="color: #666;">
-                            Écrivez le contenu de votre compte rendu. 
-                            <?php if (!empty($contenu_html)): ?>
-                                Vous pouvez modifier le modèle chargé selon vos activités.
-                            <?php else: ?>
-                                Vous pouvez aussi charger un modèle ci-dessus pour vous guider.
-                            <?php endif; ?>
-                        </small>
+                        <label for="description">Titre/Description rapide</label>
+                        <textarea id="description" name="description" class="form-control" placeholder="Résumé rapide du CR..."><?php echo htmlspecialchars($description); ?></textarea>
                     </div>
-                    
+
                     <div class="form-group">
-                        <label for="pieces_jointes">Pièces jointes (facultatif)</label>
-                        <input type="file" id="pieces_jointes" name="pieces_jointes[]" multiple onchange="verifierFichiers()">
-                        <div id="message_validation_fichiers" style="margin-top: 10px; font-size: 14px;"></div>
-                        <small style="color: #666;">
-                            Types de fichiers autorisés : JPG, PNG, GIF, PDF, DOC, DOCX<br>
-                            Taille maximale : <?php echo formaterTailleFichier($taille_max_fichier); ?>
-                        </small>
+                        <label for="contenu_html">Contenu détaillé</label>
+                        <textarea id="contenu_html" name="contenu_html"><?php echo htmlspecialchars($contenu_html); ?></textarea>
+                        <input type="hidden" name="contenu_html_input" id="contenu_html_input" value="<?php echo htmlspecialchars($contenu_html); ?>">
                     </div>
-                    
-                    <div style="text-align: right; margin-top: 20px;">
-                        <button type="submit" name="insérer" class="btn btn-success">
-                            Créer le compte rendu
+
+                    <div class="file-section">
+                        <label>Ajouter des pièces jointes</label>
+                        <div class="file-input-wrapper">
+                            <label for="pieces_jointes" class="file-input-label">📎 Sélectionner des fichiers</label>
+                            <input type="file" id="pieces_jointes" name="pieces_jointes[]" multiple onchange="verifierFichiers()">
+                        </div>
+                        <div id="message_validation_fichiers"></div>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" name="insérer" class="btn btn-primary">
+                            ✅ Enregistrer le compte rendu
+                        </button>
+                        <button type="button" class="btn btn-secondary" onclick="window.location.href='accueil.php';">
+                            ❌ Annuler
                         </button>
                     </div>
-                </form>
+                </div>
+            </form>
+        <?php endif; ?>
+
+        <?php if ($show_cr_list && $liste_cr_result): ?>
+            <div class="card">
+                <h2>📋 Comptes rendus du <?php echo formatDateFrench($date_cr); ?></h2>
+                <table style="width: 100%; border-collapse: collapse;">
+                    <thead>
+                        <tr style="background: #f8f9fa; border-bottom: 2px solid #ddd;">
+                            <th style="padding: 10px; text-align: left;">Titre</th>
+                            <th style="padding: 10px; text-align: left;">Heure</th>
+                            <th style="padding: 10px; text-align: center;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php while ($cr = mysqli_fetch_assoc($liste_cr_result)): ?>
+                            <tr style="border-bottom: 1px solid #eee;">
+                                <td style="padding: 10px;"><?php echo htmlspecialchars($cr['description']); ?></td>
+                                <td style="padding: 10px;"><?php echo date('H:i', strtotime($cr['datetime'])); ?></td>
+                                <td style="padding: 10px; text-align: center;">
+                                    <a href="liste_cr.php?action=voir&id=<?php echo $cr['num']; ?>" style="color: #007bff; text-decoration: none;">Voir</a>
+                                </td>
+                            </tr>
+                        <?php endwhile; ?>
+                    </tbody>
+                </table>
             </div>
         <?php endif; ?>
     </div>

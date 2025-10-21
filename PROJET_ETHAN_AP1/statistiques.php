@@ -163,6 +163,6 @@ $result_eleves_cr = mysqli_query($bdd, $query_eleves_cr);
         <a href="export.php?type=statistiques&format=pdf">📊 Exporter les statistiques (PDF)</a>
     </p>
     
-    <p><a href="accueil.php">Retour à l'accueil</a></p>
+    <p><a href="accueil.php">Retour à l'accueil</a> | <a href="<?php echo $_SESSION['Stype'] == 1 ? 'tableau_bord_prof.php' : 'tableau_bord_eleve.php'; ?>">📊 Tableau de bord</a></p>
 </body>
 </html>

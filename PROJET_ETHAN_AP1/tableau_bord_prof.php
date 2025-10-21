@@ -19,8 +19,10 @@ $stats_query = "SELECT
                 COUNT(*) as total_cr,
                 SUM(CASE WHEN vu = 1 THEN 1 ELSE 0 END) as cr_vus,
                 SUM(CASE WHEN vu = 0 THEN 1 ELSE 0 END) as cr_non_vus,
-                COUNT(DISTINCT num_utilisateur) as nb_eleves_actifs
-                FROM cr";
+                COUNT(DISTINCT cr.num_utilisateur) as nb_eleves_actifs
+                FROM cr
+                JOIN utilisateur u ON cr.num_utilisateur = u.num
+                WHERE u.type = 0";
 $stats_result = mysqli_query($bdd, $stats_query);
 $stats = mysqli_fetch_assoc($stats_result);
 
@@ -203,6 +205,16 @@ function formatDateFrench($date) {
             <div>
                 <a href="accueil.php" class="btn btn-secondary">Retour à l'accueil</a>
                 <a href="gestion_modeles.php" class="btn btn-success">Gérer les modèles</a>
+            </div>
+        </div>
+        
+        <div style="background: white; padding: 15px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+            <strong style="color: #333;">Nouvelles Fonctionnalités:</strong>
+            <div style="margin-top: 10px; display: flex; flex-wrap: wrap; gap: 10px;">
+                <a href="recherche_cr.php" class="btn" style="background: #17a2b8; font-size: 12px; padding: 8px 12px;">🔍 Recherche Avancée</a>
+                <a href="gestion_groupes.php" class="btn" style="background: #007bff; font-size: 12px; padding: 8px 12px;">👥 Gérer Groupes</a>
+                <a href="gestion_rappels.php" class="btn" style="background: #ffc107; color: black; font-size: 12px; padding: 8px 12px;">⏰ Rappels</a>
+                <a href="analytics_advanced.php" class="btn" style="background: #28a745; font-size: 12px; padding: 8px 12px;">📊 Analytics</a>
             </div>
         </div>
         
