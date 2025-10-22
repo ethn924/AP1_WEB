@@ -32,6 +32,8 @@ $result = mysqli_query($bdd, $query);
 </head>
 <body>
     <h2>Liste des élèves</h2>
+    <p><a href="accueil.php">← Retour à l'accueil</a></p>
+    <?php afficherMenuFonctionnalites(); ?>
 
     <?php if (mysqli_num_rows($result) > 0): ?>
         <table border="1">
@@ -112,6 +114,6 @@ $result = mysqli_query($bdd, $query);
         </div>
     <?php endif; ?>
 
-    <p><a href="accueil.php">Retour à l'accueil</a> | <a href="tableau_bord_prof.php">📊 Tableau de bord</a></p>
+    <p><a href="accueil.php">Retour à l'accueil</a></p>
 </body>
 </html>

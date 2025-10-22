@@ -3,9 +3,6 @@ session_start();
 include '_conf.php';
 include 'fonctions.php';
 
-use PHPMailer\PHPMailer\PHPMailer;
-use PHPMailer\PHPMailer\Exception;
-
 if (!isset($_SESSION['Sid'])) {
     header("Location: index.php");
     exit();
@@ -60,14 +57,14 @@ if (isset($_POST['renvoyer_validation'])) {
         require __DIR__ . '/phpmailer/PHPMailer.php';
         require __DIR__ . '/phpmailer/SMTP.php';
 
-        $mail = new PHPMailer(true);
+        $mail = new \PHPMailer\PHPMailer\PHPMailer(true);
         try {
             $mail->isSMTP();
             $mail->Host       = 'smtp.hostinger.com';
             $mail->SMTPAuth   = true;
             $mail->Username   = 'contact@sioslam.fr';  
             $mail->Password   = '&5&Y@*QHb';           
-            $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+            $mail->SMTPSecure = \PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_STARTTLS;
             $mail->Port       = 587;
             $mail->CharSet    = 'UTF-8';
 
@@ -122,6 +119,8 @@ if (isset($_POST['renvoyer_validation'])) {
     </style>
 </head>
 <body>
+    <?php afficherNavigation(); ?>
+    <?php afficherMenuFonctionnalites(); ?>
     <h2>Informations personnelles</h2>
     
     <?php if ($message): ?>
@@ -163,6 +162,6 @@ if (isset($_POST['renvoyer_validation'])) {
         <button type="submit" name="update_password">Changer le mot de passe</button>
     </form>
     
-    <p><a href="accueil.php">Retour à l'accueil</a> | <a href="<?php echo $_SESSION['Stype'] == 1 ? 'tableau_bord_prof.php' : 'tableau_bord_eleve.php'; ?>">📊 Tableau de bord</a></p>
+    <p><a href="accueil.php">Retour à l'accueil</a></p>
 </body>
 </html>

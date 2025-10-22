@@ -284,14 +284,10 @@ if (isset($_GET['success']) && $_GET['success'] == 1) {
     </style>
 </head>
 <body>
+    <?php afficherNavigation(); ?>
+    <?php afficherMenuFonctionnalites(); ?>
     <div class="container">
-        <div class="header">
-            <h1>Gestion des Groupes d'Étudiants</h1>
-            <div>
-                <a href="accueil.php" class="btn btn-secondary">← Accueil</a>
-                <a href="tableau_bord_prof.php" class="btn btn-secondary">📊 Tableau de bord</a>
-            </div>
-        </div>
+        <h1>Gestion des Groupes d'Étudiants</h1>
         
         <?php if (!empty($message)): ?>
             <div class="alert alert-success">

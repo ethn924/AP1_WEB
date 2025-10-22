@@ -1,6 +1,7 @@
 <?php
 session_start();
 include '_conf.php';
+include 'fonctions.php';
 
 if (!isset($_SESSION['Sid']) || $_SESSION['Stype'] != 0) {
     header("Location: index.php");
@@ -358,6 +359,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </script>
 </head>
 <body>
+    <?php afficherNavigation(); ?>
+    <?php afficherMenuFonctionnalites(); ?>
     <h2>Mes informations de stage</h2>
     
     <?php if ($message): ?>
@@ -460,8 +463,5 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         <button type="submit" style="padding: 10px 20px; font-size: 16px;">Enregistrer les informations</button>
     </form>
-
-    <p><a href="editer_cr.php">Retour à la création de compte rendu</a></p>
-    <p><a href="accueil.php">Retour à l'accueil</a> | <a href="tableau_bord_eleve.php">📊 Tableau de bord</a></p>
 </body>
 </html>

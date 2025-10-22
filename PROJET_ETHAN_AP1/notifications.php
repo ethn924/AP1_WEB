@@ -50,6 +50,8 @@ $result = mysqli_query($bdd, $query);
     </style>
 </head>
 <body>
+    <?php afficherNavigation(); ?>
+    <?php afficherMenuFonctionnalites(); ?>
     <h2>Mes notifications</h2>
     
     <form method="POST">
@@ -75,7 +77,5 @@ $result = mysqli_query($bdd, $query);
     <?php else: ?>
         <p>Aucune notification.</p>
     <?php endif; ?>
-    
-    <p><a href="accueil.php">Retour à l'accueil</a> | <a href="<?php echo $_SESSION['Stype'] == 1 ? 'tableau_bord_prof.php' : 'tableau_bord_eleve.php'; ?>">📊 Tableau de bord</a></p>
 </body>
 </html>

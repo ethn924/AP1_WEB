@@ -3,7 +3,6 @@ session_start();
 include '_conf.php';
 include 'fonctions.php';
 
-// Vérification que l'utilisateur est connecté
 if (!isset($_SESSION['Sid'])) {
     header("Location: index.php");
     exit();
@@ -22,7 +21,6 @@ if (!$cr_id) {
     exit();
 }
 
-// Récupérer les données du CR
 $query = "SELECT c.*, u.nom, u.prenom FROM cr c JOIN utilisateur u ON c.num_utilisateur = u.num WHERE c.num = $cr_id";
 $result = mysqli_query($bdd, $query);
 $cr = mysqli_fetch_assoc($result);
@@ -32,34 +30,30 @@ if (!$cr) {
     exit();
 }
 
-// Vérifier les droits d'accès
 if ($_SESSION['Stype'] == 0 && $cr['num_utilisateur'] != $_SESSION['Sid']) {
     header("Location: liste_cr.php");
     exit();
 }
 
-// Obtenir le statut
 $statut_data = getStatutCR($cr_id);
 
 switch ($format) {
     case 'pdf':
-        exportPDF($cr, $statut_data);
-        break;
+    exportPDF($cr, $statut_data);
+    break;
     case 'excel':
-        exportExcel($cr, $statut_data);
-        break;
+    exportExcel($cr, $statut_data);
+    break;
     case 'word':
-        exportWord($cr, $statut_data);
-        break;
+    exportWord($cr, $statut_data);
+    break;
     default:
-        header("Location: liste_cr.php");
-        break;
+    header("Location: liste_cr.php");
+    break;
 }
-
 function exportPDF($cr, $statut_data) {
     header('Content-Type: application/pdf');
     header('Content-Disposition: attachment; filename="CR_' . $cr['num'] . '_' . date('Y-m-d') . '.pdf"');
-    
     echo "% PDF-1.4\n";
     echo "1 0 obj\n";
     echo "<< /Type /Catalog /Pages 2 0 R >>\n";
@@ -73,9 +67,7 @@ function exportPDF($cr, $statut_data) {
     echo "4 0 obj\n";
     echo "<< /Font << /F1 << /Type /Font /Subtype /Type1 /BaseFont /Helvetica >> >> >>\n";
     echo "endobj\n";
-    
     $content = generatePDFContent($cr, $statut_data);
-    
     echo "5 0 obj\n";
     echo "<< /Length " . strlen($content) . " >>\n";
     echo "stream\n";
@@ -96,82 +88,64 @@ function exportPDF($cr, $statut_data) {
     echo strlen($content) + 400 . "\n";
     echo "%%EOF\n";
 }
-
 function exportExcel($cr, $statut_data) {
     header('Content-Type: application/vnd.ms-excel');
     header('Content-Disposition: attachment; filename="CR_' . $cr['num'] . '_' . date('Y-m-d') . '.xls"');
-    
     $excel = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
-    $excel .= "<Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\"\n";
-    $excel .= "xmlns:o=\"urn:schemas-microsoft-com:office:office\"\n";
-    $excel .= "xmlns:x=\"urn:schemas-microsoft-com:office:excel\"\n";
-    $excel .= "xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"\n";
-    $excel .= "xmlns:html=\"http://www.w3.org/TR/REC-html40\">\n";
-    $excel .= "<Worksheet ss:Name=\"Compte Rendu\">\n";
-    $excel .= "<Table>\n";
-    
-    // En-têtes
-    $excel .= "<Row><Cell><Data ss:Type=\"String\">Numéro CR</Data></Cell></Row>\n";
-    $excel .= "<Row><Cell><Data ss:Type=\"String\">" . htmlspecialchars($cr['num']) . "</Data></Cell></Row>\n";
-    $excel .= "\n";
-    
-    $excel .= "<Row><Cell><Data ss:Type=\"String\">Étudiant</Data></Cell></Row>\n";
-    $excel .= "<Row><Cell><Data ss:Type=\"String\">" . htmlspecialchars($cr['prenom'] . ' ' . $cr['nom']) . "</Data></Cell></Row>\n";
-    $excel .= "\n";
-    
-    $excel .= "<Row><Cell><Data ss:Type=\"String\">Titre</Data></Cell></Row>\n";
-    $excel .= "<Row><Cell><Data ss:Type=\"String\">" . htmlspecialchars($cr['titre'] ?? 'N/A') . "</Data></Cell></Row>\n";
-    $excel .= "\n";
-    
-    $excel .= "<Row><Cell><Data ss:Type=\"String\">Date</Data></Cell></Row>\n";
-    $excel .= "<Row><Cell><Data ss:Type=\"String\">" . date('d/m/Y', strtotime($cr['date'])) . "</Data></Cell></Row>\n";
-    $excel .= "\n";
-    
-    $excel .= "<Row><Cell><Data ss:Type=\"String\">Description</Data></Cell></Row>\n";
-    $excel .= "<Row><Cell><Data ss:Type=\"String\">" . htmlspecialchars($cr['description']) . "</Data></Cell></Row>\n";
-    $excel .= "\n";
-    
-    if ($statut_data) {
-        $excel .= "<Row><Cell><Data ss:Type=\"String\">Statut</Data></Cell></Row>\n";
-        $excel .= "<Row><Cell><Data ss:Type=\"String\">" . htmlspecialchars($statut_data['statut']) . "</Data></Cell></Row>\n";
+$excel .= "<Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\"\n";
+$excel .= "xmlns:o=\"urn:schemas-microsoft-com:office:office\"\n";
+$excel .= "xmlns:x=\"urn:schemas-microsoft-com:office:excel\"\n";
+$excel .= "xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"\n";
+$excel .= "xmlns:html=\"http://www.w3.org/TR/REC-html40\">\n";
+$excel .= "<Worksheet ss:Name=\"Compte Rendu\">\n";
+$excel .= "<Table>\n";
+$excel .= "<Row><Cell><Data ss:Type=\"String\">Numéro CR</Data></Cell></Row>\n";
+$excel .= "<Row><Cell><Data ss:Type=\"String\">" . htmlspecialchars($cr['num']) . "</Data></Cell></Row>\n";
+$excel .= "\n";
+$excel .= "<Row><Cell><Data ss:Type=\"String\">Étudiant</Data></Cell></Row>\n";
+$excel .= "<Row><Cell><Data ss:Type=\"String\">" . htmlspecialchars($cr['prenom'] . ' ' . $cr['nom']) . "</Data></Cell></Row>\n";
+$excel .= "\n";
+$excel .= "<Row><Cell><Data ss:Type=\"String\">Titre</Data></Cell></Row>\n";
+$excel .= "<Row><Cell><Data ss:Type=\"String\">" . htmlspecialchars($cr['titre'] ?? 'N/A') . "</Data></Cell></Row>\n";
+$excel .= "\n";
+$excel .= "<Row><Cell><Data ss:Type=\"String\">Date</Data></Cell></Row>\n";
+$excel .= "<Row><Cell><Data ss:Type=\"String\">" . date('d/m/Y', strtotime($cr['date'])) . "</Data></Cell></Row>\n";
+$excel .= "\n";
+$excel .= "<Row><Cell><Data ss:Type=\"String\">Description</Data></Cell></Row>\n";
+$excel .= "<Row><Cell><Data ss:Type=\"String\">" . htmlspecialchars($cr['description']) . "</Data></Cell></Row>\n";
+$excel .= "\n";
+if ($statut_data) {
+    $excel .= "<Row><Cell><Data ss:Type=\"String\">Statut</Data></Cell></Row>\n";
+    $excel .= "<Row><Cell><Data ss:Type=\"String\">" . htmlspecialchars($statut_data['statut']) . "</Data></Cell></Row>\n";
     }
-    
-    $excel .= "</Table>\n";
-    $excel .= "</Worksheet>\n";
-    $excel .= "</Workbook>";
-    
-    echo $excel;
+$excel .= "</Table>\n";
+$excel .= "</Worksheet>\n";
+$excel .= "</Workbook>";
+echo $excel;
 }
-
 function exportWord($cr, $statut_data) {
     header('Content-Type: application/vnd.openxmlformats-officedocument.wordprocessingml.document');
     header('Content-Disposition: attachment; filename="CR_' . $cr['num'] . '_' . date('Y-m-d') . '.docx"');
-    
-    // Créer un simple fichier Word en XML (format OOXML)
-    $word = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>';
-    $word .= '<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">';
-    $word .= '<w:body>';
-    $word .= '<w:p><w:pPr><w:pStyle w:val="Heading1"/></w:pPr><w:r><w:t>Compte Rendu de Stage</w:t></w:r></w:p>';
-    $word .= '<w:p><w:r><w:t>Numéro: ' . htmlspecialchars($cr['num']) . '</w:t></w:r></w:p>';
-    $word .= '<w:p><w:r><w:t>Étudiant: ' . htmlspecialchars($cr['prenom'] . ' ' . $cr['nom']) . '</w:t></w:r></w:p>';
-    $word .= '<w:p><w:r><w:t>Titre: ' . htmlspecialchars($cr['titre'] ?? 'N/A') . '</w:t></w:r></w:p>';
-    $word .= '<w:p><w:r><w:t>Date: ' . date('d/m/Y', strtotime($cr['date'])) . '</w:t></w:r></w:p>';
-    $word .= '<w:p><w:pPr><w:pStyle w:val="Heading2"/></w:pPr><w:r><w:t>Description</w:t></w:r></w:p>';
-    $word .= '<w:p><w:r><w:t>' . htmlspecialchars($cr['description']) . '</w:t></w:r></w:p>';
-    
-    if ($cr['contenu_html']) {
-        $word .= '<w:p><w:pPr><w:pStyle w:val="Heading2"/></w:pPr><w:r><w:t>Contenu Détaillé</w:t></w:r></w:p>';
-        $word .= '<w:p><w:r><w:t>' . htmlspecialchars(strip_tags($cr['contenu_html'])) . '</w:t></w:r></w:p>';
-    }
-    
-    if ($statut_data) {
-        $word .= '<w:p><w:pPr><w:pStyle w:val="Heading2"/></w:pPr><w:r><w:t>Statut</w:t></w:r></w:p>';
-        $word .= '<w:p><w:r><w:t>' . htmlspecialchars($statut_data['statut']) . '</w:t></w:r></w:p>';
-    }
-    
-    $word .= '</w:body></w:document>';
-    
-    echo $word;
+    $word = '<?xml version="1.0" encoding="UTF-8" standalone="yes"<?php';
+$word .= '<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">';
+$word .= '<w:body>';
+$word .= '<w:p><w:pPr><w:pStyle w:val="Heading1"/></w:pPr><w:r><w:t>Compte Rendu de Stage</w:t></w:r></w:p>';
+$word .= '<w:p><w:r><w:t>Numéro: ' . htmlspecialchars($cr['num']) . '</w:t></w:r></w:p>';
+$word .= '<w:p><w:r><w:t>Étudiant: ' . htmlspecialchars($cr['prenom'] . ' ' . $cr['nom']) . '</w:t></w:r></w:p>';
+$word .= '<w:p><w:r><w:t>Titre: ' . htmlspecialchars($cr['titre'] ?? 'N/A') . '</w:t></w:r></w:p>';
+$word .= '<w:p><w:r><w:t>Date: ' . date('d/m/Y', strtotime($cr['date'])) . '</w:t></w:r></w:p>';
+$word .= '<w:p><w:pPr><w:pStyle w:val="Heading2"/></w:pPr><w:r><w:t>Description</w:t></w:r></w:p>';
+$word .= '<w:p><w:r><w:t>' . htmlspecialchars($cr['description']) . '</w:t></w:r></w:p>';
+if ($cr['contenu_html']) {
+    $word .= '<w:p><w:pPr><w:pStyle w:val="Heading2"/></w:pPr><w:r><w:t>Contenu Détaillé</w:t></w:r></w:p>';
+    $word .= '<w:p><w:r><w:t>' . htmlspecialchars(strip_tags($cr['contenu_html'])) . '</w:t></w:r></w:p>';
+}
+if ($statut_data) {
+    $word .= '<w:p><w:pPr><w:pStyle w:val="Heading2"/></w:pPr><w:r><w:t>Statut</w:t></w:r></w:p>';
+    $word .= '<w:p><w:r><w:t>' . htmlspecialchars($statut_data['statut']) . '</w:t></w:r></w:p>';
+}
+$word .= '</w:body></w:document>';
+echo $word;
 }
 
 function generatePDFContent($cr, $statut_data) {
@@ -180,7 +154,7 @@ function generatePDFContent($cr, $statut_data) {
     $content .= "50 750 Td\n";
     $content .= "(Compte Rendu de Stage) Tj\n";
     $content .= "0 -20 Td\n";
-    $content .= "(/F1 10 Tf\n";
+    $content .= "/F1 10 Tf\n";
     $content .= "(Numéro: " . $cr['num'] . ") Tj\n";
     $content .= "0 -15 Td\n";
     $content .= "(Étudiant: " . $cr['prenom'] . " " . $cr['nom'] . ") Tj\n";
@@ -192,15 +166,13 @@ function generatePDFContent($cr, $statut_data) {
     $content .= "(Description:) Tj\n";
     $content .= "0 -15 Td\n";
     $content .= "(" . substr($cr['description'], 0, 80) . "...) Tj\n";
-    
     if ($statut_data) {
         $content .= "0 -30 Td\n";
         $content .= "(Statut: " . $statut_data['statut'] . ") Tj\n";
     }
-    
     $content .= "ET\n";
     return $content;
 }
 
 mysqli_close($bdd);
-?>
+    ?>

@@ -1,6 +1,7 @@
 <?php
 session_start();
 include '_conf.php';
+include 'fonctions.php';
 
 if (!isset($_SESSION['Sid']) || $_SESSION['Stype'] != 1) {
     header("Location: index.php");
@@ -89,6 +90,8 @@ $result_eleves_cr = mysqli_query($bdd, $query_eleves_cr);
     </style>
 </head>
 <body>
+    <?php afficherNavigation(); ?>
+    <?php afficherMenuFonctionnalites(); ?>
     <h2>Statistiques du système</h2>
     
     <div class="stats-grid">
@@ -163,6 +166,6 @@ $result_eleves_cr = mysqli_query($bdd, $query_eleves_cr);
         <a href="export.php?type=statistiques&format=pdf">📊 Exporter les statistiques (PDF)</a>
     </p>
     
-    <p><a href="accueil.php">Retour à l'accueil</a> | <a href="<?php echo $_SESSION['Stype'] == 1 ? 'tableau_bord_prof.php' : 'tableau_bord_eleve.php'; ?>">📊 Tableau de bord</a></p>
+    <p><a href="accueil.php">Retour à l'accueil</a></p>
 </body>
 </html>

@@ -157,13 +157,124 @@ if (isset($_GET['view']) && !empty($_GET['view'])) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Liste des comptes rendus</title>
+    <style>
+        .modal-overlay {
+            position: fixed; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100%; 
+            background: rgba(0,0,0,0.6); 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            z-index: 1000; 
+            padding: 20px;
+        }
+        .modal-content {
+            background: white; 
+            border-radius: 8px; 
+            max-width: 700px; 
+            width: 100%; 
+            max-height: 85vh; 
+            overflow-y: auto;
+        }
+        .modal-header {
+            padding: 20px; 
+            border-bottom: 2px solid #f0f0f0; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            position: sticky; 
+            top: 0; 
+            background: white;
+        }
+        .modal-body {
+            padding: 20px;
+        }
+        .info-box {
+            background: #f8f9fa; 
+            padding: 15px; 
+            border-radius: 4px; 
+            margin-bottom: 20px;
+        }
+        .section-title {
+            margin-bottom: 15px;
+            color: #333;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 5px;
+        }
+        .file-item {
+            background: #f0f0f0; 
+            padding: 10px; 
+            margin: 8px 0; 
+            border-radius: 4px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center;
+        }
+        .comment-item {
+            background: #e7f3ff; 
+            padding: 12px; 
+            margin: 10px 0; 
+            border-left: 4px solid #007bff; 
+            border-radius: 4px;
+        }
+        .btn {
+            padding: 10px 20px; 
+            border: none; 
+            border-radius: 4px; 
+            cursor: pointer; 
+            font-weight: 600; 
+            text-decoration: none; 
+            display: inline-block; 
+            text-align: center;
+        }
+        .btn-primary { background: #007bff; color: white; }
+        .btn-secondary { background: #6c757d; color: white; }
+        .btn-success { background: #28a745; color: white; }
+        .btn-warning { background: #ffc107; color: #333; }
+        .btn-sm { padding: 6px 12px; font-size: 12px; }
+        .btn-block { width: 100%; box-sizing: border-box; }
+        .search-box {
+            background: #f8f9fa; 
+            padding: 15px; 
+            border-radius: 4px; 
+            margin-bottom: 20px;
+        }
+        .filter-box {
+            background: #f8f9fa; 
+            padding: 15px; 
+            border-radius: 4px; 
+            margin-bottom: 20px;
+        }
+        .sort-options {
+            display: flex; 
+            gap: 8px; 
+            flex-wrap: wrap; 
+            margin-top: 10px;
+        }
+        .sort-btn {
+            background: #e9ecef; 
+            color: #333; 
+            padding: 8px 15px; 
+            text-decoration: none; 
+            border-radius: 4px; 
+            display: inline-block;
+        }
+        .sort-btn.active {
+            background: #007bff; 
+            color: white;
+        }
+    </style>
 </head>
 <body>
+    <?php afficherNavigation(); ?>
+    <?php afficherMenuFonctionnalites(); ?>
     <h1>📋 Comptes rendus des élèves</h1>
-    <p><a href="accueil.php">← Retour à l'accueil</a> | <a href="tableau_bord_prof.php">📊 Tableau de bord</a></p>
 
     <!-- Barre de recherche -->
-    <div style="background: #f8f9fa; padding: 15px; border-radius: 4px; margin-bottom: 20px;">
+    <div class="search-box">
         <form method="GET" style="display: flex; gap: 10px; flex-wrap: wrap;">
             <input type="text" name="search" placeholder="Rechercher dans les CR..." value="<?php echo isset($_GET['search']) ? htmlspecialchars($_GET['search']) : ''; ?>" style="padding: 8px; flex: 1; min-width: 250px; border: 1px solid #ddd; border-radius: 4px;">
             <?php if (isset($_GET['sort'])): ?>
@@ -172,7 +283,7 @@ if (isset($_GET['view']) && !empty($_GET['view'])) {
             <?php if (isset($_GET['eleve'])): ?>
                 <input type="hidden" name="eleve" value="<?php echo htmlspecialchars($_GET['eleve']); ?>">
             <?php endif; ?>
-            <button type="submit" style="background: #007bff; color: white; padding: 8px 15px; border: none; border-radius: 4px; cursor: pointer; font-weight: 600;">
+            <button type="submit" class="btn btn-primary btn-sm">
                 🔍 Rechercher
             </button>
             <?php if (isset($_GET['search']) && !empty($_GET['search'])): ?>
@@ -180,7 +291,7 @@ if (isset($_GET['view']) && !empty($_GET['view'])) {
                     echo isset($_GET['sort']) ? '?sort=' . $_GET['sort'] : '';
                     echo (isset($_GET['sort']) && isset($_GET['eleve'])) ? '&' : (isset($_GET['eleve']) ? '?' : '');
                     echo isset($_GET['eleve']) ? 'eleve=' . $_GET['eleve'] : '';
-                ?>" style="background: #6c757d; color: white; padding: 8px 15px; border: none; border-radius: 4px; cursor: pointer; text-decoration: none; display: inline-block;">
+                ?>" class="btn btn-secondary btn-sm">
                     ✕ Réinitialiser
                 </a>
             <?php endif; ?>
@@ -188,20 +299,20 @@ if (isset($_GET['view']) && !empty($_GET['view'])) {
     </div>
 
     <!-- Options de tri -->
-    <div style="background: #f8f9fa; padding: 15px; border-radius: 4px; margin-bottom: 20px;">
+    <div class="filter-box">
         <strong>Trier par :</strong>
-        <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px;">
-            <a href="?sort=eleve<?php echo isset($_GET['search']) ? '&search=' . urlencode($_GET['search']) : ''; ?>" style="background: <?php echo (isset($_GET['sort']) && $_GET['sort'] == 'eleve') ? '#007bff' : '#e9ecef'; ?>; color: <?php echo (isset($_GET['sort']) && $_GET['sort'] == 'eleve') ? 'white' : '#333'; ?>; padding: 8px 15px; text-decoration: none; border-radius: 4px; display: inline-block;">Élève (A-Z)</a>
-            <a href="?sort=date_asc<?php echo isset($_GET['search']) ? '&search=' . urlencode($_GET['search']) : ''; ?>" style="background: <?php echo (isset($_GET['sort']) && $_GET['sort'] == 'date_asc') ? '#007bff' : '#e9ecef'; ?>; color: <?php echo (isset($_GET['sort']) && $_GET['sort'] == 'date_asc') ? 'white' : '#333'; ?>; padding: 8px 15px; text-decoration: none; border-radius: 4px; display: inline-block;">Date (plus anciens)</a>
-            <a href="?sort=date_desc<?php echo isset($_GET['search']) ? '&search=' . urlencode($_GET['search']) : ''; ?>" style="background: <?php echo (isset($_GET['sort']) && $_GET['sort'] == 'date_desc') ? '#007bff' : '#e9ecef'; ?>; color: <?php echo (isset($_GET['sort']) && $_GET['sort'] == 'date_desc') ? 'white' : '#333'; ?>; padding: 8px 15px; text-decoration: none; border-radius: 4px; display: inline-block;">Date (plus récents)</a>
-            <a href="?sort=vu<?php echo isset($_GET['search']) ? '&search=' . urlencode($_GET['search']) : ''; ?>" style="background: <?php echo (isset($_GET['sort']) && $_GET['sort'] == 'vu') ? '#007bff' : '#e9ecef'; ?>; color: <?php echo (isset($_GET['sort']) && $_GET['sort'] == 'vu') ? 'white' : '#333'; ?>; padding: 8px 15px; text-decoration: none; border-radius: 4px; display: inline-block;">Consultés</a>
-            <a href="?sort=non_vu<?php echo isset($_GET['search']) ? '&search=' . urlencode($_GET['search']) : ''; ?>" style="background: <?php echo (isset($_GET['sort']) && $_GET['sort'] == 'non_vu') ? '#007bff' : '#e9ecef'; ?>; color: <?php echo (isset($_GET['sort']) && $_GET['sort'] == 'non_vu') ? 'white' : '#333'; ?>; padding: 8px 15px; text-decoration: none; border-radius: 4px; display: inline-block;">Non consultés</a>
-            <a href="liste_cr_prof.php" style="background: #e9ecef; color: #333; padding: 8px 15px; text-decoration: none; border-radius: 4px; display: inline-block;">Tous</a>
+        <div class="sort-options">
+            <a href="?sort=eleve<?php echo isset($_GET['search']) ? '&search=' . urlencode($_GET['search']) : ''; ?>" class="sort-btn <?php echo (isset($_GET['sort']) && $_GET['sort'] == 'eleve') ? 'active' : ''; ?>">Élève (A-Z)</a>
+            <a href="?sort=date_asc<?php echo isset($_GET['search']) ? '&search=' . urlencode($_GET['search']) : ''; ?>" class="sort-btn <?php echo (isset($_GET['sort']) && $_GET['sort'] == 'date_asc') ? 'active' : ''; ?>">Date (plus anciens)</a>
+            <a href="?sort=date_desc<?php echo isset($_GET['search']) ? '&search=' . urlencode($_GET['search']) : ''; ?>" class="sort-btn <?php echo (isset($_GET['sort']) && $_GET['sort'] == 'date_desc') ? 'active' : ''; ?>">Date (plus récents)</a>
+            <a href="?sort=vu<?php echo isset($_GET['search']) ? '&search=' . urlencode($_GET['search']) : ''; ?>" class="sort-btn <?php echo (isset($_GET['sort']) && $_GET['sort'] == 'vu') ? 'active' : ''; ?>">Consultés</a>
+            <a href="?sort=non_vu<?php echo isset($_GET['search']) ? '&search=' . urlencode($_GET['search']) : ''; ?>" class="sort-btn <?php echo (isset($_GET['sort']) && $_GET['sort'] == 'non_vu') ? 'active' : ''; ?>">Non consultés</a>
+            <a href="liste_cr_prof.php" class="sort-btn">Tous</a>
         </div>
     </div>
 
     <!-- Filtre par élève -->
-    <div style="background: #f8f9fa; padding: 15px; border-radius: 4px; margin-bottom: 20px;">
+    <div class="filter-box">
         <strong>Filtrer par élève :</strong>
         <form method="GET" style="margin-top: 10px;">
             <?php if (isset($_GET['sort'])): ?>
@@ -260,7 +371,7 @@ if (isset($_GET['view']) && !empty($_GET['view'])) {
                            echo isset($_GET['search']) ? '&search=' . urlencode($_GET['search']) : '';
                            ?>" style="color: #007bff; text-decoration: none; cursor: pointer;">
                             <?php
-                            $desc = htmlspecialchars($cr['description']);
+                            $desc = strip_tags($cr['description']);
                             echo (strlen($desc) > 80) ? substr($desc, 0, 80) . '...' : $desc;
                             ?>
                         </a>
@@ -289,12 +400,12 @@ if (isset($_GET['view']) && !empty($_GET['view'])) {
                             <input type="hidden" name="cr_num" value="<?php echo $cr['num']; ?>">
                             <?php if ($cr['vu'] == 0): ?>
                                 <input type="hidden" name="vu_value" value="1">
-                                <button type="submit" name="update_vu" style="background: #28a745; color: white; padding: 6px 12px; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">
+                                <button type="submit" name="update_vu" class="btn btn-success btn-sm">
                                     Marquer comme vu
                                 </button>
                             <?php else: ?>
                                 <input type="hidden" name="vu_value" value="0">
-                                <button type="submit" name="update_vu" style="background: #ffc107; color: #333; padding: 6px 12px; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">
+                                <button type="submit" name="update_vu" class="btn btn-warning btn-sm">
                                     Marquer comme non vu
                                 </button>
                             <?php endif; ?>
@@ -304,7 +415,7 @@ if (isset($_GET['view']) && !empty($_GET['view'])) {
                            echo isset($_GET['sort']) ? '&sort=' . urlencode($_GET['sort']) : '';
                            echo isset($_GET['eleve']) ? '&eleve=' . urlencode($_GET['eleve']) : '';
                            echo isset($_GET['search']) ? '&search=' . urlencode($_GET['search']) : '';
-                           ?>" style="background: #007bff; color: white; padding: 6px 12px; text-decoration: none; border-radius: 4px; font-size: 12px; display: inline-block;">
+                           ?>" class="btn btn-primary btn-sm">
                             Voir détails
                         </a>
                     </td>
@@ -323,9 +434,9 @@ if (isset($_GET['view']) && !empty($_GET['view'])) {
         $commentaires = getCommentaires($cr_detail['num']);
         $pieces_jointes = getPiecesJointes($cr_detail['num']);
     ?>
-    <div style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 20px;">
-        <div style="background: white; border-radius: 8px; max-width: 700px; width: 100%; max-height: 85vh; overflow-y: auto;">
-            <div style="padding: 20px; border-bottom: 2px solid #f0f0f0; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; background: white;">
+    <div class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
                 <h2 style="margin: 0;">Détail du compte rendu</h2>
                 <a href="liste_cr_prof.php?<?php
                     echo isset($_GET['sort']) ? 'sort=' . $_GET['sort'] : '';
@@ -335,26 +446,47 @@ if (isset($_GET['view']) && !empty($_GET['view'])) {
                 ?>" style="text-decoration: none; font-size: 24px; color: #999; cursor: pointer;">✕</a>
             </div>
 
-            <div style="padding: 20px;">
-                <div style="background: #f8f9fa; padding: 15px; margin-bottom: 20px; border-radius: 4px;">
+            <div class="modal-body">
+                <div class="info-box">
                     <p><strong>Élève :</strong> <?php echo htmlspecialchars($cr_detail['prenom'] . ' ' . $cr_detail['nom']); ?></p>
                     <p><strong>Date de création :</strong> <?php echo formatDateFrench($cr_detail['datetime']); ?></p>
                     <p><strong>Statut :</strong> <?php echo $cr_detail['vu'] ? '✅ Consulté' : '⏳ Non consulté'; ?></p>
                 </div>
 
-                <h3>Description</h3>
-                <div style="background: #f8f9fa; padding: 12px; border-radius: 4px; margin-bottom: 20px; white-space: pre-wrap; line-height: 1.6;">
-                    <?php echo htmlspecialchars($cr_detail['description']); ?>
+                <h3 class="section-title">Description</h3>
+                <div style="background: #f8f9fa; padding: 12px; border-radius: 4px; margin-bottom: 20px; line-height: 1.6; text-align: left; word-wrap: break-word;">
+                    <?php 
+                    $desc = $cr_detail['description'];
+                    // Nettoyage complet des espaces superflus
+                    $desc = trim($desc);
+                    $desc = preg_replace('/^[ \t]+/m', '', $desc);
+                    $desc = preg_replace('/\n{3,}/', "\n\n", $desc);
+                    echo nl2br(htmlspecialchars($desc));
+                    ?>
                 </div>
+
+                <!-- Contenu HTML -->
+                <?php if (!empty(trim(strip_tags($cr_detail['contenu_html'])))): ?>
+                <h3 class="section-title">Contenu du compte rendu</h3>
+                <div style="background: #f8f9fa; padding: 15px; border-radius: 4px; margin-bottom: 20px; line-height: 1.8;">
+                    <?php 
+                    $html = $cr_detail['contenu_html'];
+                    $html = preg_replace('/<p[^>]*>(\s|&nbsp;|<br\s*\/?>;)*<\/p>/i', '', $html);
+                    $html = preg_replace('/margin(-left|-right|-top|-bottom)?:[^;]*;?/i', '', $html);
+                    $html = preg_replace('/padding(-left|-right|-top|-bottom)?:[^;]*;?/i', '', $html);
+                    echo $html;
+                    ?>
+                </div>
+                <?php endif; ?>
 
                 <!-- Pièces jointes -->
                 <?php if (!empty($pieces_jointes)): ?>
-                <h3>Pièces jointes</h3>
+                <h3 class="section-title">Pièces jointes</h3>
                 <div style="margin-bottom: 20px;">
                     <?php foreach ($pieces_jointes as $piece): ?>
-                        <div style="background: #f0f0f0; padding: 10px; margin: 8px 0; border-radius: 4px; display: flex; justify-content: space-between; align-items: center;">
+                        <div class="file-item">
                             <span>📄 <?php echo htmlspecialchars($piece['nom_fichier']); ?> (<?php echo formaterTailleFichier($piece['taille']); ?>)</span>
-                            <a href="telecharger.php?id=<?php echo $piece['id']; ?>" target="_blank" style="background: #007bff; color: white; padding: 5px 12px; text-decoration: none; border-radius: 4px; font-size: 12px;">
+                            <a href="telecharger.php?id=<?php echo $piece['id']; ?>" target="_blank" class="btn btn-primary btn-sm">
                                 Télécharger
                             </a>
                         </div>
@@ -364,14 +496,20 @@ if (isset($_GET['view']) && !empty($_GET['view'])) {
 
                 <!-- Commentaires existants -->
                 <?php if (!empty($commentaires)): ?>
-                <h3>Commentaires existants</h3>
+                <h3 class="section-title">Commentaires existants</h3>
                 <div style="margin-bottom: 20px;">
                     <?php foreach ($commentaires as $commentaire): ?>
-                        <div style="background: #e7f3ff; padding: 12px; margin: 10px 0; border-left: 4px solid #007bff; border-radius: 4px;">
+                        <div class="comment-item">
                             <strong><?php echo htmlspecialchars($commentaire['prenom'] . ' ' . $commentaire['nom']); ?></strong>
                             <span style="color: #999; font-size: 12px;">— <?php echo formatDateFrench($commentaire['date_creation']); ?></span>
-                            <p style="margin: 8px 0 0 0; white-space: pre-wrap; line-height: 1.5;">
-                                <?php echo htmlspecialchars($commentaire['commentaire']); ?>
+                            <p style="margin: 8px 0 0 0; line-height: 1.5; text-align: left; word-wrap: break-word;">
+                                <?php 
+                                $comment = $commentaire['commentaire'];
+                                $comment = trim($comment);
+                                $comment = preg_replace('/^[ \t]+/m', '', $comment);
+                                $comment = preg_replace('/\n{3,}/', "\n\n", $comment);
+                                echo nl2br(htmlspecialchars($comment));
+                                ?>
                             </p>
                         </div>
                     <?php endforeach; ?>
@@ -379,11 +517,11 @@ if (isset($_GET['view']) && !empty($_GET['view'])) {
                 <?php endif; ?>
 
                 <!-- Formulaire pour ajouter un commentaire -->
-                <h3>Ajouter un commentaire</h3>
+                <h3 class="section-title">Ajouter un commentaire</h3>
                 <form method="POST">
                     <input type="hidden" name="cr_num" value="<?php echo $cr_detail['num']; ?>">
                     <textarea name="commentaire" rows="5" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-family: Arial, sans-serif; margin-bottom: 10px;" placeholder="Votre commentaire..." required></textarea>
-                    <button type="submit" name="ajouter_commentaire" style="background: #28a745; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-weight: 600;">
+                    <button type="submit" name="ajouter_commentaire" class="btn btn-success">
                         Ajouter le commentaire
                     </button>
                 </form>
@@ -399,12 +537,12 @@ if (isset($_GET['view']) && !empty($_GET['view'])) {
                     <input type="hidden" name="cr_num" value="<?php echo $cr_detail['num']; ?>">
                     <?php if ($cr_detail['vu'] == 0): ?>
                         <input type="hidden" name="vu_value" value="1">
-                        <button type="submit" name="update_vu" style="background: #28a745; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; width: 100%;">
+                        <button type="submit" name="update_vu" class="btn btn-success btn-block">
                             ✅ Marquer comme consulté
                         </button>
                     <?php else: ?>
                         <input type="hidden" name="vu_value" value="0">
-                        <button type="submit" name="update_vu" style="background: #ffc107; color: #333; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; width: 100%;">
+                        <button type="submit" name="update_vu" class="btn btn-warning btn-block">
                             ⏳ Marquer comme non consulté
                         </button>
                     <?php endif; ?>
@@ -415,7 +553,7 @@ if (isset($_GET['view']) && !empty($_GET['view'])) {
                     echo (isset($_GET['sort']) && isset($_GET['eleve'])) ? '&' : '';
                     echo isset($_GET['eleve']) ? 'eleve=' . $_GET['eleve'] : '';
                     echo isset($_GET['search']) ? '&search=' . urlencode($_GET['search']) : '';
-                ?>" style="background: #6c757d; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px; display: inline-block; margin-top: 10px; text-align: center; width: 100%; box-sizing: border-box;">
+                ?>" class="btn btn-secondary btn-block" style="margin-top: 10px;">
                     Fermer
                 </a>
             </div>
@@ -435,9 +573,9 @@ if (isset($_GET['view']) && !empty($_GET['view'])) {
         $stage_result = mysqli_query($bdd, $stage_query);
         $stage_info = mysqli_fetch_assoc($stage_result);
     ?>
-    <div style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 20px;">
-        <div style="background: white; border-radius: 8px; max-width: 700px; width: 100%; max-height: 85vh; overflow-y: auto;">
-            <div style="padding: 20px; border-bottom: 2px solid #f0f0f0; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; background: white;">
+    <div class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
                 <h2 style="margin: 0;">Informations de stage</h2>
                 <a href="liste_cr_prof.php?<?php
                     echo isset($_GET['sort']) ? 'sort=' . $_GET['sort'] : '';
@@ -448,12 +586,12 @@ if (isset($_GET['view']) && !empty($_GET['view'])) {
                 ?>" style="text-decoration: none; font-size: 24px; color: #999; cursor: pointer;">✕</a>
             </div>
 
-            <div style="padding: 20px;">
+            <div class="modal-body">
                 <p style="margin-bottom: 15px;"><strong>Élève :</strong> <?php echo htmlspecialchars($stage_info['prenom'] . ' ' . $stage_info['nom']); ?></p>
 
                 <?php if (!empty($stage_info['nom'])): ?>
-                    <h3>Entreprise</h3>
-                    <div style="background: #f8f9fa; padding: 12px; border-radius: 4px; margin-bottom: 20px;">
+                    <h3 class="section-title">Entreprise</h3>
+                    <div class="info-box">
                         <p><strong>Nom :</strong> <?php echo htmlspecialchars($stage_info['nom']); ?></p>
                         <p><strong>Adresse :</strong> <?php echo htmlspecialchars($stage_info['adresse']); ?></p>
                         <p><strong>Code postal :</strong> <?php echo htmlspecialchars($stage_info['CP']); ?></p>
@@ -461,13 +599,19 @@ if (isset($_GET['view']) && !empty($_GET['view'])) {
                         <p><strong>Téléphone :</strong> <?php echo htmlspecialchars($stage_info['tel']); ?></p>
                         <p><strong>Email :</strong> <?php echo htmlspecialchars($stage_info['email']); ?></p>
                         <p style="margin-top: 10px;"><strong>Libellé du stage :</strong></p>
-                        <p style="white-space: pre-wrap; line-height: 1.5;">
-                            <?php echo htmlspecialchars($stage_info['libelleStage']); ?>
+                        <p style="line-height: 1.5; text-align: left; word-wrap: break-word;">
+                            <?php 
+                            $libelle = $stage_info['libelleStage'];
+                            $libelle = trim($libelle);
+                            $libelle = preg_replace('/^[ \t]+/m', '', $libelle);
+                            $libelle = preg_replace('/\n{3,}/', "\n\n", $libelle);
+                            echo nl2br(htmlspecialchars($libelle));
+                            ?>
                         </p>
                     </div>
 
-                    <h3>Tuteur en entreprise</h3>
-                    <div style="background: #f8f9fa; padding: 12px; border-radius: 4px;">
+                    <h3 class="section-title">Tuteur en entreprise</h3>
+                    <div class="info-box">
                         <p><strong>Nom :</strong> <?php echo htmlspecialchars($stage_info['tuteur_prenom'] . ' ' . $stage_info['tuteur_nom']); ?></p>
                         <p><strong>Téléphone :</strong> <?php echo htmlspecialchars($stage_info['tuteur_tel']); ?></p>
                         <p><strong>Email :</strong> <?php echo htmlspecialchars($stage_info['tuteur_email']); ?></p>
@@ -484,7 +628,7 @@ if (isset($_GET['view']) && !empty($_GET['view'])) {
                     echo isset($_GET['eleve']) ? 'eleve=' . $_GET['eleve'] : '';
                     echo isset($_GET['search']) ? '&search=' . urlencode($_GET['search']) : '';
                     echo isset($_GET['view']) ? '&view=' . $_GET['view'] : '';
-                ?>" style="background: #6c757d; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px; display: inline-block; margin-top: 15px; text-align: center; width: 100%; box-sizing: border-box;">
+                ?>" class="btn btn-secondary btn-block" style="margin-top: 15px;">
                     Fermer
                 </a>
             </div>
