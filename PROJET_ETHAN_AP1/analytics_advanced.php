@@ -2,8 +2,10 @@
 session_start();
 include '_conf.php';
 include 'fonctions.php';
-if (!isset($_SESSION['Sid']) || $_SESSION['Stype'] != 1) { header("Location: index.php");
-exit(); }
+if (!isset($_SESSION['Sid']) || $_SESSION['Stype'] != 1) {
+    header("Location: index.php");
+    exit();
+}
 $bdd = mysqli_connect($serveurBDD, $userBDD, $mdpBDD, $nomBDD);
 if (!$bdd) { die("Erreur connexion BDD"); }
 $query_groupes = "SELECT * FROM groupes WHERE professeur_responsable_id = {$_SESSION['Sid']} ORDER BY nom";
@@ -62,7 +64,7 @@ while ($row = mysqli_fetch_assoc($result_rappels)) { $rappels[] = $row; } } else
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Analytics Avancées</title>
-    <script src="https:
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
     <style>
     body { font-family: Arial, sans-serif;
         line-height: 1.6;
