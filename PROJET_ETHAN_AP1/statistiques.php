@@ -48,6 +48,7 @@ $result_eleves_cr = mysqli_query($bdd, $query_eleves_cr);
 
 <!DOCTYPE html>
 <html lang="fr">
+
 <head>
     <meta charset="UTF-8">
     <title>Statistiques</title>
@@ -58,6 +59,7 @@ $result_eleves_cr = mysqli_query($bdd, $query_eleves_cr);
             gap: 20px;
             margin: 20px 0;
         }
+
         .stat-card {
             background: white;
             border: 1px solid #ddd;
@@ -65,35 +67,42 @@ $result_eleves_cr = mysqli_query($bdd, $query_eleves_cr);
             border-radius: 8px;
             text-align: center;
         }
+
         .stat-number {
             font-size: 2em;
             font-weight: bold;
             color: #007bff;
         }
+
         .stat-label {
             color: #666;
             margin-top: 10px;
         }
+
         table {
             width: 100%;
             border-collapse: collapse;
             margin: 20px 0;
         }
-        th, td {
+
+        th,
+        td {
             border: 1px solid #ddd;
             padding: 12px;
             text-align: left;
         }
+
         th {
             background-color: #f8f9fa;
         }
     </style>
 </head>
+
 <body>
     <?php afficherNavigation(); ?>
     <?php afficherMenuFonctionnalites(); ?>
     <h2>Statistiques du système</h2>
-    
+
     <div class="stats-grid">
         <div class="stat-card">
             <div class="stat-number"><?php echo $eleves['total']; ?></div>
@@ -120,20 +129,21 @@ $result_eleves_cr = mysqli_query($bdd, $query_eleves_cr);
             <div class="stat-label">Pièces jointes</div>
         </div>
     </div>
-    
+
     <h3>Taux de consultation des CR</h3>
-    <?php 
+    <?php
     $taux_consultation = $cr['total'] > 0 ? round(($cr_vus['total'] / $cr['total']) * 100, 2) : 0;
     ?>
     <div style="background: #f8f9fa; padding: 20px; border-radius: 8px;">
-        <div style="background: #007bff; height: 30px; width: <?php echo $taux_consultation; ?>%; border-radius: 4px; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">
+        <div
+            style="background: #007bff; height: 30px; width: <?php echo $taux_consultation; ?>%; border-radius: 4px; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">
             <?php echo $taux_consultation; ?>%
         </div>
         <p style="text-align: center; margin-top: 10px;">
             <?php echo $cr_vus['total']; ?> / <?php echo $cr['total']; ?> CR consultés
         </p>
     </div>
-    
+
     <h3>Activité des élèves</h3>
     <table>
         <thead>
@@ -151,7 +161,7 @@ $result_eleves_cr = mysqli_query($bdd, $query_eleves_cr);
                     <td><?php echo $eleve['nb_cr']; ?></td>
                     <td><?php echo $eleve['nb_vus']; ?></td>
                     <td>
-                        <?php 
+                        <?php
                         $taux = $eleve['nb_cr'] > 0 ? round(($eleve['nb_vus'] / $eleve['nb_cr']) * 100, 2) : 0;
                         echo $taux . '%';
                         ?>
@@ -160,12 +170,13 @@ $result_eleves_cr = mysqli_query($bdd, $query_eleves_cr);
             <?php endwhile; ?>
         </tbody>
     </table>
-    
+
     <p>
-        <a href="export.php?type=statistiques&format=csv">📊 Exporter les statistiques (CSV)</a> | 
+        <a href="export.php?type=statistiques&format=csv">📊 Exporter les statistiques (CSV)</a> |
         <a href="export.php?type=statistiques&format=pdf">📊 Exporter les statistiques (PDF)</a>
     </p>
-    
+
     <p><a href="accueil.php">Retour à l'accueil</a></p>
 </body>
+
 </html>

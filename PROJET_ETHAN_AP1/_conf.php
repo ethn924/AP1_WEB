@@ -1,7 +1,7 @@
 <?php
 $serveurBDD="localhost";
 $userBDD="root";
-$mdpBDD="root";
+$mdpBDD="";
 $nomBDD="ap1_ethan_2025";
 
 // Configuration pour l'upload de fichiers

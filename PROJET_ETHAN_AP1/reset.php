@@ -26,7 +26,7 @@ if ($user['token_created_at']) {
     $token_time = strtotime($user['token_created_at']);
     $current_time = time();
     $time_diff = $current_time - $token_time;
-    
+
     if ($time_diff > 3600) {
         mysqli_query($bdd, "UPDATE utilisateur SET token = '', token_created_at = NULL WHERE num = " . $user['num']);
         die('Ce lien a expiré. Veuillez faire une nouvelle demande de réinitialisation.');
@@ -37,15 +37,15 @@ $error = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $password = $_POST['password'];
     $confirm = $_POST['password_confirm'];
-    
+
     if ($password !== $confirm) {
         $error = "Les mots de passe ne correspondent pas";
     } else {
         $md5_hash = md5($password);
-        
+
         $update_query = "UPDATE utilisateur SET motdepasse = '$md5_hash', token = '', token_created_at = NULL WHERE num = " . $user['num'];
         $update_result = mysqli_query($bdd, $update_query);
-        
+
         if ($update_result) {
             echo "Votre mot de passe a bien été réinitialisé.<br>";
             echo "<a href='index.php'>Se connecter</a>";
@@ -58,7 +58,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 ?>
 
 <form method="post">
-    <?php if (!empty($error)) echo "<p style='color:red'>$error</p>"; ?>
+    <?php if (!empty($error))
+        echo "<p style='color:red'>$error</p>"; ?>
     <input type="password" name="password" placeholder="Nouveau mot de passe" required>
     <input type="password" name="password_confirm" placeholder="Confirmer" required>
     <button type="submit">Changer le mot de passe</button>

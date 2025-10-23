@@ -37,13 +37,13 @@ if ($_POST && !empty($_POST['email'])) {
             $mail = new PHPMailer(true);
             try {
                 $mail->isSMTP();
-                $mail->Host       = 'smtp.hostinger.com';
-                $mail->SMTPAuth   = true;
-                $mail->Username   = 'contact@sioslam.fr';  
-                $mail->Password   = '&5&Y@*QHb';           
+                $mail->Host = 'smtp.hostinger.com';
+                $mail->SMTPAuth = true;
+                $mail->Username = 'contact@sioslam.fr';
+                $mail->Password = '&5&Y@*QHb';
                 $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
-                $mail->Port       = 587;
-                $mail->CharSet    = 'UTF-8';
+                $mail->Port = 587;
+                $mail->CharSet = 'UTF-8';
 
                 $mail->setFrom('contact@sioslam.fr', 'CONTACT SIOSLAM');
                 $mail->addAddress($email);
@@ -67,23 +67,26 @@ mysqli_close($bdd);
 
 <!DOCTYPE html>
 <html lang="fr">
+
 <head>
     <meta charset="UTF-8">
     <title>Mot de passe oublié</title>
 </head>
+
 <body>
     <h2>Réinitialisation de mot de passe</h2>
-    
+
     <form method="post">
         <label for="email">Votre email :</label><br>
         <input type="email" id="email" name="email" placeholder="Votre email" required><br><br>
         <button type="submit">Recevoir le lien de réinitialisation</button>
     </form>
-    
+
     <?php if ($msg): ?>
         <p><?php echo htmlspecialchars($msg); ?></p>
     <?php endif; ?>
-    
+
     <p><a href="index.php">Retour à la connexion</a></p>
 </body>
+
 </html>

@@ -357,4 +357,47 @@ function afficherMenuFonctionnalites() {
     echo '</div>';
     echo '</div>';
 }
+
+/**
+ * Calcule les analytics pour un groupe donné
+ */
+function calculerAnalyticsGroupe($groupe_id = null) {
+    global $bdd;
+    
+    if (!$bdd) {
+        return false;
+    }
+    
+    $groupe_condition = $groupe_id ? " AND c.groupe_id = $groupe_id" : "";
+    
+    $query = "SELECT
+        COUNT(*) as total,
+        SUM(CASE WHEN s.statut = 'soumis' THEN 1 ELSE 0 END) as cr_soumis,
+        SUM(CASE WHEN s.statut = 'evalue' THEN 1 ELSE 0 END) as cr_evalues,
+        SUM(CASE WHEN s.statut = 'approuve' THEN 1 ELSE 0 END) as cr_approuves
+    FROM cr c
+    LEFT JOIN statuts_cr s ON c.num = s.cr_id
+    WHERE c.archivé = 0 $groupe_condition";
+    
+    $result = mysqli_query($bdd, $query);
+    if (!$result) {
+        return false;
+    }
+    
+    $row = mysqli_fetch_assoc($result);
+    
+    $total = $row['total'] ?? 0;
+    $soumis = $row['cr_soumis'] ?? 0;
+    $evalues = $row['cr_evalues'] ?? 0;
+    $approuves = $row['cr_approuves'] ?? 0;
+    
+    return array(
+        'total_cr' => $total,
+        'cr_soumis' => $soumis,
+        'cr_evalues' => $evalues,
+        'cr_approuves' => $approuves,
+        'taux_soumission' => ($total > 0) ? round(($soumis / $total) * 100, 1) : 0,
+        'taux_evaluation' => ($total > 0) ? round(($evalues / $total) * 100, 1) : 0
+    );
+}
 ?>

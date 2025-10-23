@@ -12,10 +12,12 @@ if ($bdd = mysqli_connect($serveurBDD, $userBDD, $mdpBDD, $nomBDD)) {
 
 <!DOCTYPE html>
 <html lang="fr">
+
 <head>
     <meta charset="UTF-8">
     <title>Connexion</title>
 </head>
+
 <body>
     <h2>Connexion</h2>
     <!-- Formulaire envoyé vers accueil.php qui gère l'authentification -->
@@ -32,4 +34,5 @@ if ($bdd = mysqli_connect($serveurBDD, $userBDD, $mdpBDD, $nomBDD)) {
     <p><a href="sendmail.php">Mot de passe oublié ?</a></p>
     <p><a href="inscription.php">Créer un compte</a></p>
 </body>
+
 </html>

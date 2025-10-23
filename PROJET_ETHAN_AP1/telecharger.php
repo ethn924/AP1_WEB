@@ -33,7 +33,7 @@ if ($user_type == 0) { // Élève
     $cr_query = "SELECT num_utilisateur FROM cr WHERE num = " . $piece_jointe['cr_id'];
     $cr_result = mysqli_query($bdd, $cr_query);
     $cr_data = mysqli_fetch_assoc($cr_result);
-    
+
     if ($cr_data['num_utilisateur'] != $user_id) {
         die('Accès non autorisé');
     }

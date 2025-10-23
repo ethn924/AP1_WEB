@@ -43,7 +43,7 @@ if (isset($_GET['delete']) && !empty($_GET['delete'])) {
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_groupe'])) {
     $nom = mysqli_real_escape_string($bdd, $_POST['nom']);
     $description = mysqli_real_escape_string($bdd, $_POST['description']);
-    
+
     if (empty($nom)) {
         $error = "Le nom du groupe est obligatoire.";
     } else {
@@ -52,7 +52,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_groupe'])) {
             $groupe_id = intval($_POST['groupe_id']);
             $update_query = "UPDATE groupes SET nom = '$nom', description = '$description' 
                             WHERE id = $groupe_id AND professeur_responsable_id = {$_SESSION['Sid']}";
-            
+
             if (mysqli_query($bdd, $update_query)) {
                 $message = "Le groupe a été mis à jour avec succès.";
                 header("Location: gestion_groupes.php?edit=$groupe_id&success=1");
@@ -65,7 +65,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_groupe'])) {
             $professeur_id = $_SESSION['Sid'];
             $insert_query = "INSERT INTO groupes (nom, description, professeur_responsable_id) 
                             VALUES ('$nom', '$description', $professeur_id)";
-            
+
             if (mysqli_query($bdd, $insert_query)) {
                 $message = "Le groupe a été créé avec succès.";
                 $new_groupe_id = mysqli_insert_id($bdd);
@@ -82,7 +82,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_groupe'])) {
 if (isset($_POST['add_membre']) || isset($_POST['remove_membre'])) {
     $groupe_id = intval($_POST['groupe_id']);
     $utilisateur_id = intval($_POST['utilisateur_id']);
-    
+
     if (isset($_POST['add_membre'])) {
         $query = "INSERT INTO membres_groupe (groupe_id, utilisateur_id) VALUES ($groupe_id, $utilisateur_id)";
         if (mysqli_query($bdd, $query)) {
@@ -121,6 +121,7 @@ if (isset($_GET['success']) && $_GET['success'] == 1) {
 
 <!DOCTYPE html>
 <html lang="fr">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -133,31 +134,37 @@ if (isset($_GET['success']) && $_GET['success'] == 1) {
             padding: 20px;
             background-color: #f5f5f5;
         }
+
         .container {
             max-width: 1200px;
             margin: 0 auto;
         }
+
         .header {
             display: flex;
             justify-content: space-between;
             align-items: center;
             margin-bottom: 20px;
         }
+
         .card {
             background: white;
             border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
             padding: 20px;
             margin-bottom: 20px;
         }
+
         .form-group {
             margin-bottom: 20px;
         }
+
         .form-group label {
             display: block;
             margin-bottom: 5px;
             font-weight: bold;
         }
+
         .form-control {
             width: 100%;
             padding: 10px;
@@ -166,9 +173,11 @@ if (isset($_GET['success']) && $_GET['success'] == 1) {
             font-size: 16px;
             box-sizing: border-box;
         }
+
         textarea.form-control {
             min-height: 100px;
         }
+
         .btn {
             display: inline-block;
             background: #007bff;
@@ -180,55 +189,67 @@ if (isset($_GET['success']) && $_GET['success'] == 1) {
             border: none;
             cursor: pointer;
         }
+
         .btn-secondary {
             background: #6c757d;
         }
+
         .btn-danger {
             background: #dc3545;
         }
+
         .btn-success {
             background: #28a745;
         }
+
         .btn:hover {
             opacity: 0.9;
         }
+
         .alert {
             padding: 15px;
             border-radius: 4px;
             margin-bottom: 20px;
         }
+
         .alert-success {
             background-color: #d4edda;
             color: #155724;
             border: 1px solid #c3e6cb;
         }
+
         .alert-danger {
             background-color: #f8d7da;
             color: #721c24;
             border: 1px solid #f5c6cb;
         }
+
         .groupe-item {
             background: #f8f9fa;
             border-radius: 4px;
             padding: 15px;
             margin-bottom: 15px;
         }
+
         .groupe-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
             margin-bottom: 10px;
         }
+
         .groupe-title {
             font-weight: bold;
             font-size: 18px;
             color: #333;
         }
+
         .groupe-info {
             color: #666;
             font-size: 12px;
             margin-bottom: 10px;
         }
+
         .groupe-members {
             background: white;
             padding: 10px;
@@ -237,11 +258,13 @@ if (isset($_GET['success']) && $_GET['success'] == 1) {
             max-height: 150px;
             overflow-y: auto;
         }
+
         .membre-list {
             list-style: none;
             padding: 0;
             margin: 0;
         }
+
         .membre-item {
             display: flex;
             justify-content: space-between;
@@ -249,33 +272,40 @@ if (isset($_GET['success']) && $_GET['success'] == 1) {
             padding: 5px;
             border-bottom: 1px solid #eee;
         }
+
         .membre-item:last-child {
             border-bottom: none;
         }
+
         .groupe-actions {
             display: flex;
             gap: 10px;
             margin-top: 10px;
         }
+
         .groupe-actions a {
             font-size: 12px;
             padding: 6px 12px;
         }
+
         .add-membre-form {
             display: flex;
             gap: 10px;
             align-items: flex-end;
             margin-top: 10px;
         }
+
         .add-membre-form select {
             flex: 1;
             padding: 8px;
             border: 1px solid #ddd;
             border-radius: 4px;
         }
+
         .add-membre-form button {
             padding: 8px 15px;
         }
+
         h2 {
             color: #333;
             border-bottom: 2px solid #eee;
@@ -283,42 +313,44 @@ if (isset($_GET['success']) && $_GET['success'] == 1) {
         }
     </style>
 </head>
+
 <body>
     <?php afficherNavigation(); ?>
     <?php afficherMenuFonctionnalites(); ?>
     <div class="container">
         <h1>Gestion des Groupes d'Étudiants</h1>
-        
+
         <?php if (!empty($message)): ?>
             <div class="alert alert-success">
                 <?php echo htmlspecialchars($message); ?>
             </div>
         <?php endif; ?>
-        
+
         <?php if (!empty($error)): ?>
             <div class="alert alert-danger">
                 <?php echo htmlspecialchars($error); ?>
             </div>
         <?php endif; ?>
-        
+
         <div class="card">
             <h2><?php echo $groupe ? 'Modifier le groupe' : 'Créer un nouveau groupe'; ?></h2>
             <form method="POST" action="">
                 <?php if ($groupe): ?>
                     <input type="hidden" name="groupe_id" value="<?php echo $groupe['id']; ?>">
                 <?php endif; ?>
-                
+
                 <div class="form-group">
                     <label for="nom">Nom du groupe *</label>
-                    <input type="text" id="nom" name="nom" class="form-control" required 
-                           value="<?php echo $groupe ? htmlspecialchars($groupe['nom']) : ''; ?>">
+                    <input type="text" id="nom" name="nom" class="form-control" required
+                        value="<?php echo $groupe ? htmlspecialchars($groupe['nom']) : ''; ?>">
                 </div>
-                
+
                 <div class="form-group">
                     <label for="description">Description</label>
-                    <textarea id="description" name="description" class="form-control"><?php echo $groupe ? htmlspecialchars($groupe['description']) : ''; ?></textarea>
+                    <textarea id="description" name="description"
+                        class="form-control"><?php echo $groupe ? htmlspecialchars($groupe['description']) : ''; ?></textarea>
                 </div>
-                
+
                 <div style="text-align: right;">
                     <?php if ($groupe): ?>
                         <a href="gestion_groupes.php" class="btn btn-secondary">Annuler</a>
@@ -329,13 +361,13 @@ if (isset($_GET['success']) && $_GET['success'] == 1) {
                 </div>
             </form>
         </div>
-        
+
         <?php if ($groupe): ?>
             <div class="card">
                 <h2>Gestion des Membres</h2>
-                
+
                 <?php $membres = getMembresGroupe($groupe['id']); ?>
-                
+
                 <?php if (count($membres) > 0): ?>
                     <div class="groupe-members">
                         <ul class="membre-list">
@@ -345,9 +377,9 @@ if (isset($_GET['success']) && $_GET['success'] == 1) {
                                     <form method="POST" action="" style="display: inline;">
                                         <input type="hidden" name="groupe_id" value="<?php echo $groupe['id']; ?>">
                                         <input type="hidden" name="utilisateur_id" value="<?php echo $membre['num']; ?>">
-                                        <button type="submit" name="remove_membre" class="btn btn-danger" 
-                                                onclick="return confirm('Retirer ce membre ?');" 
-                                                style="padding: 3px 8px; font-size: 11px;">
+                                        <button type="submit" name="remove_membre" class="btn btn-danger"
+                                            onclick="return confirm('Retirer ce membre ?');"
+                                            style="padding: 3px 8px; font-size: 11px;">
                                             Retirer
                                         </button>
                                     </form>
@@ -359,14 +391,14 @@ if (isset($_GET['success']) && $_GET['success'] == 1) {
                 <?php else: ?>
                     <p>Aucun membre dans ce groupe.</p>
                 <?php endif; ?>
-                
+
                 <div class="add-membre-form">
                     <form method="POST" action="" style="display: flex; gap: 10px; width: 100%;">
                         <input type="hidden" name="groupe_id" value="<?php echo $groupe['id']; ?>">
                         <select name="utilisateur_id" required style="flex: 1;">
                             <option value="">-- Sélectionner un étudiant --</option>
                             <?php foreach ($all_students as $student): ?>
-                                <?php 
+                                <?php
                                 // Vérifier si l'étudiant est déjà dans le groupe
                                 $is_member = false;
                                 foreach ($membres as $membre) {
@@ -375,9 +407,9 @@ if (isset($_GET['success']) && $_GET['success'] == 1) {
                                         break;
                                     }
                                 }
-                                
+
                                 if (!$is_member):
-                                ?>
+                                    ?>
                                     <option value="<?php echo $student['num']; ?>">
                                         <?php echo htmlspecialchars($student['prenom'] . ' ' . $student['nom']); ?>
                                     </option>
@@ -389,7 +421,7 @@ if (isset($_GET['success']) && $_GET['success'] == 1) {
                 </div>
             </div>
         <?php endif; ?>
-        
+
         <div class="card">
             <h2>Mes Groupes</h2>
             <?php if (mysqli_num_rows($result_groupes) > 0): ?>
@@ -406,18 +438,18 @@ if (isset($_GET['success']) && $_GET['success'] == 1) {
                                 </p>
                             </div>
                         </div>
-                        
-                        <?php 
+
+                        <?php
                         $membres_groupe = getMembresGroupe($groupe_item['id']);
                         ?>
                         <div style="font-size: 12px; color: #666; margin-bottom: 10px;">
                             <strong><?php echo count($membres_groupe); ?> membre(s)</strong>
                         </div>
-                        
+
                         <div class="groupe-actions">
                             <a href="gestion_groupes.php?edit=<?php echo $groupe_item['id']; ?>" class="btn">Gérer</a>
-                            <a href="gestion_groupes.php?delete=<?php echo $groupe_item['id']; ?>" class="btn btn-danger" 
-                               onclick="return confirm('Êtes-vous sûr de vouloir supprimer ce groupe ?');">Supprimer</a>
+                            <a href="gestion_groupes.php?delete=<?php echo $groupe_item['id']; ?>" class="btn btn-danger"
+                                onclick="return confirm('Êtes-vous sûr de vouloir supprimer ce groupe ?');">Supprimer</a>
                         </div>
                     </div>
                 <?php endwhile; ?>
@@ -427,6 +459,7 @@ if (isset($_GET['success']) && $_GET['success'] == 1) {
         </div>
     </div>
 </body>
+
 </html>
 <?php
 mysqli_close($bdd);
