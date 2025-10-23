@@ -314,9 +314,9 @@ function afficherNavigation() {
     $dashboard = ($_SESSION['Stype'] == 0) ? 'tableau_bord_eleve.php' : 'tableau_bord_prof.php';
     $icon = ($_SESSION['Stype'] == 0) ? '📊' : '👨‍🏫';
     
-    echo '<div style="margin-bottom: 20px; border-bottom: 1px solid #ddd; padding-bottom: 15px;">';
-    echo '<p style="margin: 5px 0;"><a href="accueil.php" style="color: #007bff; text-decoration: none;">← Retour à l\'accueil</a></p>';
-    echo '<p style="margin: 5px 0;"><a href="' . $dashboard . '" style="color: #28a745; text-decoration: none;">' . $icon . ' Tableau de bord</a></p>';
+    echo '<div style="margin-bottom: 20px; border-bottom: 2px solid #ddd; padding-bottom: 15px; background: #f8f9fa; padding: 15px; border-radius: 4px;">';
+    echo '<p style="margin: 5px 0;"><a href="accueil.php" style="color: #007bff; text-decoration: none; font-weight: bold;">← Retour à l\'accueil</a></p>';
+    echo '<p style="margin: 5px 0;"><a href="' . $dashboard . '" style="color: #28a745; text-decoration: none; font-weight: bold;">' . $icon . ' Tableau de bord</a></p>';
     echo '</div>';
 }
 
@@ -332,30 +332,79 @@ function afficherMenuFonctionnalites() {
     $dashboard = ($type == 0) ? 'tableau_bord_eleve.php' : 'tableau_bord_prof.php';
     $dashboard_icon = ($type == 0) ? '📊' : '👨‍🏫';
     
-    echo '<div style="background: #f8f9fa; padding: 15px; margin: 20px 0; border-radius: 4px; border: 1px solid #dee2e6;">';
-    echo '<h3 style="margin-top: 0;">🔗 Accès rapide aux fonctionnalités</h3>';
-    echo '<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px;">';
+    $style_btn = "display: block; padding: 10px; color: white; text-decoration: none; border-radius: 4px; text-align: center; font-size: 0.95em; transition: opacity 0.2s;";
+    $style_btn_hover = "opacity: 0.9;";
     
-    echo '<a href="' . $dashboard . '" style="display: block; padding: 10px; background: #28a745; color: white; text-decoration: none; border-radius: 4px; text-align: center; font-weight: bold; font-size: 1.1em;">⬅️ ' . $dashboard_icon . ' Tableau de bord</a>';
+    echo '<div style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); padding: 20px; margin: 20px 0; border-radius: 6px; border: 2px solid #dee2e6; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">';
+    echo '<h2 style="margin: 0 0 15px 0; color: #333;">🔗 TOUTES LES FONCTIONNALITÉS</h2>';
     
     if ($type == 0) {
-        echo '<a href="editer_cr.php" style="display: block; padding: 10px; background: #007bff; color: white; text-decoration: none; border-radius: 4px; text-align: center;">📝 Créer un CR</a>';
-        echo '<a href="liste_cr.php" style="display: block; padding: 10px; background: #17a2b8; color: white; text-decoration: none; border-radius: 4px; text-align: center;">📋 Mes CRs</a>';
-        echo '<a href="recherche_cr.php" style="display: block; padding: 10px; background: #6f42c1; color: white; text-decoration: none; border-radius: 4px; text-align: center;">🔍 Rechercher</a>';
-        echo '<a href="mon_stage.php" style="display: block; padding: 10px; background: #fd7e14; color: white; text-decoration: none; border-radius: 4px; text-align: center;">🏢 Mon stage</a>';
-        echo '<a href="perso.php" style="display: block; padding: 10px; background: #6c757d; color: white; text-decoration: none; border-radius: 4px; text-align: center;">⚙️ Mon profil</a>';
+        echo '<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px;">';
+        
+        // Barre rouge - Accueil/Tableau de bord
+        echo '<a href="' . $dashboard . '" style="' . $style_btn . ' background: #dc3545; font-weight: bold; font-size: 1em;" onmouseover="this.style.opacity=\'0.8\'" onmouseout="this.style.opacity=\'1\'">⬅️ Accueil</a>';
+        
+        // Section CRs
+        echo '<a href="editer_cr.php" style="' . $style_btn . ' background: #007bff;" onmouseover="this.style.opacity=\'0.8\'" onmouseout="this.style.opacity=\'1\'">📝 Créer CR</a>';
+        echo '<a href="liste_cr.php" style="' . $style_btn . ' background: #17a2b8;" onmouseover="this.style.opacity=\'0.8\'" onmouseout="this.style.opacity=\'1\'">📋 Mes CRs</a>';
+        echo '<a href="export_cr.php" style="' . $style_btn . ' background: #28a745;" onmouseover="this.style.opacity=\'0.8\'" onmouseout="this.style.opacity=\'1\'">📥 Exporter</a>';
+        
+        // Section Recherche & Infos
+        echo '<a href="recherche_cr.php" style="' . $style_btn . ' background: #6f42c1;" onmouseover="this.style.opacity=\'0.8\'" onmouseout="this.style.opacity=\'1\'">🔍 Rechercher</a>';
+        echo '<a href="mon_stage.php" style="' . $style_btn . ' background: #fd7e14;" onmouseover="this.style.opacity=\'0.8\'" onmouseout="this.style.opacity=\'1\'">🏢 Mon stage</a>';
+        echo '<a href="notifications.php" style="' . $style_btn . ' background: #e83e8c;" onmouseover="this.style.opacity=\'0.8\'" onmouseout="this.style.opacity=\'1\'">🔔 Notifications</a>';
+        
+        // Section Paramètres
+        echo '<a href="perso.php" style="' . $style_btn . ' background: #6c757d;" onmouseover="this.style.opacity=\'0.8\'" onmouseout="this.style.opacity=\'1\'">⚙️ Profil</a>';
+        
+        echo '</div>';
+        
+        echo '<div style="margin-top: 15px; font-size: 0.9em; color: #666; font-style: italic;">';
+        echo '💡 <strong>Astuce:</strong> Depuis chaque CR, vous pouvez aussi consulter son <a href="historique_cr.php" style="color: #007bff; text-decoration: none;">historique des versions</a>';
+        echo '</div>';
+        
     } else {
-        echo '<a href="liste_cr_prof.php" style="display: block; padding: 10px; background: #dc3545; color: white; text-decoration: none; border-radius: 4px; text-align: center;">📋 Réviser les CRs</a>';
-        echo '<a href="recherche_cr.php" style="display: block; padding: 10px; background: #6f42c1; color: white; text-decoration: none; border-radius: 4px; text-align: center;">🔍 Rechercher</a>';
-        echo '<a href="gestion_groupes.php" style="display: block; padding: 10px; background: #20c997; color: white; text-decoration: none; border-radius: 4px; text-align: center;">👥 Groupes</a>';
-        echo '<a href="gestion_modeles.php" style="display: block; padding: 10px; background: #ffc107; color: #333; text-decoration: none; border-radius: 4px; text-align: center;">📄 Modèles</a>';
-        echo '<a href="analytics_advanced.php" style="display: block; padding: 10px; background: #20c997; color: white; text-decoration: none; border-radius: 4px; text-align: center;">📊 Statistiques</a>';
-        echo '<a href="validations_cr.php" style="display: block; padding: 10px; background: #17a2b8; color: white; text-decoration: none; border-radius: 4px; text-align: center;">✅ Validations</a>';
-        echo '<a href="gestion_rappels.php" style="display: block; padding: 10px; background: #fd7e14; color: white; text-decoration: none; border-radius: 4px; text-align: center;">🔔 Rappels</a>';
+        echo '<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px;">';
+        
+        // Barre rouge - Accueil
+        echo '<a href="' . $dashboard . '" style="' . $style_btn . ' background: #dc3545; font-weight: bold; font-size: 1em;" onmouseover="this.style.opacity=\'0.8\'" onmouseout="this.style.opacity=\'1\'">⬅️ Accueil</a>';
+        
+        // Section Révision CRs
+        echo '<a href="liste_cr_prof.php" style="' . $style_btn . ' background: #fd7e14;" onmouseover="this.style.opacity=\'0.8\'" onmouseout="this.style.opacity=\'1\'">📋 Réviser CRs</a>';
+        echo '<a href="export_cr.php" style="' . $style_btn . ' background: #28a745;" onmouseover="this.style.opacity=\'0.8\'" onmouseout="this.style.opacity=\'1\'">📥 Exporter</a>';
+        echo '<a href="validations_cr.php" style="' . $style_btn . ' background: #17a2b8;" onmouseover="this.style.opacity=\'0.8\'" onmouseout="this.style.opacity=\'1\'">✅ Validations</a>';
+        echo '<a href="recherche_cr.php" style="' . $style_btn . ' background: #6f42c1;" onmouseover="this.style.opacity=\'0.8\'" onmouseout="this.style.opacity=\'1\'">🔍 Rechercher</a>';
+        echo '<a href="gestion_groupes.php" style="' . $style_btn . ' background: #20c997;" onmouseover="this.style.opacity=\'0.8\'" onmouseout="this.style.opacity=\'1\'">👥 Groupes</a>';
+        echo '<a href="liste_eleves.php" style="' . $style_btn . ' background: #0dcaf0;" onmouseover="this.style.opacity=\'0.8\'" onmouseout="this.style.opacity=\'1\'">👨‍🎓 Élèves</a>';
+        echo '<a href="gestion_modeles.php" style="' . $style_btn . ' background: #ffc107; color: #333;" onmouseover="this.style.opacity=\'0.8\'" onmouseout="this.style.opacity=\'1\'">📄 Modèles</a>';
+        echo '<a href="gestion_rappels.php" style="' . $style_btn . ' background: #e83e8c;" onmouseover="this.style.opacity=\'0.8\'" onmouseout="this.style.opacity=\'1\'">🔔 Rappels</a>';
+        echo '<a href="analytics_advanced.php" style="' . $style_btn . ' background: #6c757d;" onmouseover="this.style.opacity=\'0.8\'" onmouseout="this.style.opacity=\'1\'">📊 Stats</a>';
+        
+        echo '</div>';
     }
     
     echo '</div>';
-    echo '</div>';
+}
+
+/**
+ * Ajoute une sauvegarde automatique
+ */
+function ajouterSauvegardeAuto($cr_id, $utilisateur_id, $contenu_html, $description = '') {
+    global $bdd;
+    
+    if (!$bdd) {
+        return false;
+    }
+    
+    $cr_id = intval($cr_id);
+    $utilisateur_id = intval($utilisateur_id);
+    $contenu_html = mysqli_real_escape_string($bdd, $contenu_html);
+    $description = mysqli_real_escape_string($bdd, $description);
+    
+    $query = "INSERT INTO sauvegardes_auto (cr_id, utilisateur_id, contenu_html, description) 
+              VALUES ($cr_id, $utilisateur_id, '$contenu_html', '$description')";
+    
+    return mysqli_query($bdd, $query);
 }
 
 /**
@@ -399,5 +448,324 @@ function calculerAnalyticsGroupe($groupe_id = null) {
         'taux_soumission' => ($total > 0) ? round(($soumis / $total) * 100, 1) : 0,
         'taux_evaluation' => ($total > 0) ? round(($evalues / $total) * 100, 1) : 0
     );
+}
+
+/**
+ * Récupère les membres d'un groupe
+ */
+function getMembresGroupe($groupe_id) {
+    global $bdd;
+    
+    if (!$bdd) {
+        return array();
+    }
+    
+    $groupe_id = intval($groupe_id);
+    
+    $query = "SELECT u.num, u.nom, u.prenom 
+              FROM membres_groupe mg
+              JOIN utilisateur u ON mg.utilisateur_id = u.num
+              WHERE mg.groupe_id = $groupe_id
+              ORDER BY u.nom, u.prenom";
+    
+    $result = mysqli_query($bdd, $query);
+    if (!$result) {
+        return array();
+    }
+    
+    $membres = array();
+    while ($row = mysqli_fetch_assoc($result)) {
+        $membres[] = $row;
+    }
+    
+    return $membres;
+}
+
+/**
+ * Ajoute un élément à la checklist d'un modèle
+ */
+function ajouterChecklistModele($modele_id, $item_texte, $ordre, $obligatoire, $description_aide) {
+    global $bdd;
+    
+    if (!$bdd) {
+        return false;
+    }
+    
+    $modele_id = intval($modele_id);
+    $ordre = intval($ordre);
+    $obligatoire = intval($obligatoire);
+    $item_texte = mysqli_real_escape_string($bdd, $item_texte);
+    $description_aide = mysqli_real_escape_string($bdd, $description_aide);
+    
+    $query = "INSERT INTO checklists_modeles (modele_id, item_texte, ordre, obligatoire, description_aide) 
+              VALUES ($modele_id, '$item_texte', $ordre, $obligatoire, '$description_aide')";
+    
+    return mysqli_query($bdd, $query);
+}
+
+/**
+ * Récupère la checklist d'un modèle
+ */
+function getChecklistModele($modele_id) {
+    global $bdd;
+    
+    if (!$bdd) {
+        return array();
+    }
+    
+    $modele_id = intval($modele_id);
+    
+    $query = "SELECT * FROM checklists_modeles WHERE modele_id = $modele_id ORDER BY ordre";
+    
+    $result = mysqli_query($bdd, $query);
+    if (!$result) {
+        return array();
+    }
+    
+    $checklist = array();
+    while ($row = mysqli_fetch_assoc($result)) {
+        $checklist[] = $row;
+    }
+    
+    return $checklist;
+}
+
+/**
+ * Crée un rappel de soumission
+ */
+function creerRappelSoumission($groupe_id, $date_limite, $titre, $description, $professeur_id) {
+    global $bdd;
+    
+    if (!$bdd) {
+        return false;
+    }
+    
+    $groupe_id = intval($groupe_id);
+    $professeur_id = intval($professeur_id);
+    $date_limite = mysqli_real_escape_string($bdd, $date_limite);
+    $titre = mysqli_real_escape_string($bdd, $titre);
+    $description = mysqli_real_escape_string($bdd, $description);
+    
+    $query = "INSERT INTO rappels_soumission (groupe_id, date_limite, titre, description, professeur_id, actif) 
+              VALUES ($groupe_id, '$date_limite', '$titre', '$description', $professeur_id, 1)";
+    
+    return mysqli_query($bdd, $query);
+}
+
+/**
+ * Restaure une version antérieure d'un CR
+ */
+function restaurerVersionCR($version_id, $cr_id, $user_id) {
+    global $bdd;
+    
+    if (!$bdd) {
+        return false;
+    }
+    
+    $version_id = intval($version_id);
+    $cr_id = intval($cr_id);
+    $user_id = intval($user_id);
+    
+    $query_version = "SELECT * FROM versions_cr WHERE id = $version_id AND cr_id = $cr_id";
+    $result_version = mysqli_query($bdd, $query_version);
+    
+    if (!$result_version || mysqli_num_rows($result_version) == 0) {
+        return false;
+    }
+    
+    $version = mysqli_fetch_assoc($result_version);
+    
+    $contenu = mysqli_real_escape_string($bdd, $version['contenu']);
+    $contenu_html = mysqli_real_escape_string($bdd, $version['contenu_html']);
+    
+    $query_update = "UPDATE cr SET contenu = '$contenu', contenu_html = '$contenu_html' WHERE num = $cr_id";
+    
+    return mysqli_query($bdd, $query_update);
+}
+
+/**
+ * Récupère toutes les versions d'un CR
+ */
+function getVersionsCR($cr_id) {
+    global $bdd;
+    
+    if (!$bdd) {
+        return array();
+    }
+    
+    $cr_id = intval($cr_id);
+    
+    $query = "SELECT * FROM versions_cr WHERE cr_id = $cr_id ORDER BY date_creation DESC";
+    
+    $result = mysqli_query($bdd, $query);
+    if (!$result) {
+        return array();
+    }
+    
+    $versions = array();
+    while ($row = mysqli_fetch_assoc($result)) {
+        $versions[] = $row;
+    }
+    
+    return $versions;
+}
+
+/**
+ * Recherche des CR avec filtres
+ */
+function rechercherCR($filtres) {
+    global $bdd;
+    
+    if (!$bdd) {
+        return array();
+    }
+    
+    $conditions = array("c.archivé = 0");
+    
+    if (isset($filtres['titre']) && !empty($filtres['titre'])) {
+        $titre = mysqli_real_escape_string($bdd, $filtres['titre']);
+        $conditions[] = "c.titre LIKE '%$titre%'";
+    }
+    
+    if (isset($filtres['statut']) && !empty($filtres['statut'])) {
+        $statut = mysqli_real_escape_string($bdd, $filtres['statut']);
+        $conditions[] = "s.statut = '$statut'";
+    }
+    
+    if (isset($filtres['groupe_id']) && !empty($filtres['groupe_id'])) {
+        $groupe_id = intval($filtres['groupe_id']);
+        $conditions[] = "c.groupe_id = $groupe_id";
+    }
+    
+    if (isset($filtres['utilisateur_id']) && !empty($filtres['utilisateur_id'])) {
+        $utilisateur_id = intval($filtres['utilisateur_id']);
+        $conditions[] = "c.num_utilisateur = $utilisateur_id";
+    }
+    
+    if (isset($filtres['professeur_id']) && !empty($filtres['professeur_id'])) {
+        $professeur_id = intval($filtres['professeur_id']);
+        $conditions[] = "s.professeur_id = $professeur_id";
+    }
+    
+    if (isset($filtres['date_debut']) && !empty($filtres['date_debut'])) {
+        $date_debut = mysqli_real_escape_string($bdd, $filtres['date_debut']);
+        $conditions[] = "c.date_creation >= '$date_debut'";
+    }
+    
+    if (isset($filtres['date_fin']) && !empty($filtres['date_fin'])) {
+        $date_fin = mysqli_real_escape_string($bdd, $filtres['date_fin']);
+        $conditions[] = "c.date_creation <= '$date_fin'";
+    }
+    
+    $where = implode(" AND ", $conditions);
+    
+    $query = "SELECT DISTINCT c.* FROM cr c 
+              LEFT JOIN statuts_cr s ON c.num = s.cr_id
+              WHERE $where
+              ORDER BY c.date_creation DESC";
+    
+    $result = mysqli_query($bdd, $query);
+    if (!$result) {
+        return array();
+    }
+    
+    $resultats = array();
+    while ($row = mysqli_fetch_assoc($result)) {
+        $resultats[] = $row;
+    }
+    
+    return $resultats;
+}
+
+/**
+ * Marque un élément de checklist comme complété
+ */
+function marquerChecklistComplete($cr_id, $checklist_item_id) {
+    global $bdd;
+    
+    if (!$bdd) {
+        return false;
+    }
+    
+    $cr_id = intval($cr_id);
+    $checklist_item_id = intval($checklist_item_id);
+    
+    $query = "INSERT INTO validations_cr (cr_id, checklist_item_id, complete) 
+              VALUES ($cr_id, $checklist_item_id, 1)
+              ON DUPLICATE KEY UPDATE complete = 1";
+    
+    return mysqli_query($bdd, $query);
+}
+
+/**
+ * Récupère les validations d'un CR
+ */
+function getValidationsCR($cr_id) {
+    global $bdd;
+    
+    if (!$bdd) {
+        return array();
+    }
+    
+    $cr_id = intval($cr_id);
+    
+    $query = "SELECT vc.*, cm.item_texte, cm.obligatoire, cm.description_aide 
+              FROM checklists_modeles cm
+              LEFT JOIN validations_cr vc ON cm.id = vc.checklist_item_id AND vc.cr_id = $cr_id
+              ORDER BY cm.ordre";
+    
+    $result = mysqli_query($bdd, $query);
+    if (!$result) {
+        return array();
+    }
+    
+    $validations = array();
+    while ($row = mysqli_fetch_assoc($result)) {
+        $validations[] = $row;
+    }
+    
+    return $validations;
+}
+
+/**
+ * Formate une date au format français
+ */
+function formatDateFrench($date) {
+    if (!$date) {
+        return "Aucun";
+    }
+    
+    $english_months = array('January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December');
+    $french_months = array('Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre');
+    
+    $english_days = array('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday');
+    $french_days = array('Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche');
+    
+    $date_str = date('l d F Y', strtotime($date));
+    $date_str = str_replace($english_days, $french_days, $date_str);
+    $date_str = str_replace($english_months, $french_months, $date_str);
+    
+    return $date_str;
+}
+
+/**
+ * Formate une date/heure au format français
+ */
+function formatDateTimeFrench($datetime) {
+    if (!$datetime) {
+        return "Aucun";
+    }
+    
+    $english_months = array('January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December');
+    $french_months = array('Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre');
+    
+    $english_days = array('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday');
+    $french_days = array('Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche');
+    
+    $date_str = date('l d F Y à H\hi', strtotime($datetime));
+    $date_str = str_replace($english_days, $french_days, $date_str);
+    $date_str = str_replace($english_months, $french_months, $date_str);
+    
+    return $date_str;
 }
 ?>

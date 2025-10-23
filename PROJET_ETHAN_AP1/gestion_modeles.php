@@ -15,7 +15,8 @@ $error = '';
 $modele = null;
 if (isset($_GET['delete']) && !empty($_GET['delete'])) {
     $id = intval($_GET['delete']);
-    $delete_query = "DELETE FROM modeles_cr WHERE id = $id AND professeur_id = {$_SESSION['Sid']}";
+    $professeur_id = intval($_SESSION['Sid']);
+    $delete_query = "DELETE FROM modeles_cr WHERE id = $id AND professeur_id = $professeur_id";
     if (mysqli_query($bdd, $delete_query)) {
         $message = "Le modèle a été supprimé avec succès.";
     } else {
@@ -24,7 +25,8 @@ if (isset($_GET['delete']) && !empty($_GET['delete'])) {
 }
 if (isset($_GET['edit']) && !empty($_GET['edit'])) {
     $id = intval($_GET['edit']);
-    $edit_query = "SELECT * FROM modeles_cr WHERE id = $id AND professeur_id = {$_SESSION['Sid']}";
+    $professeur_id = intval($_SESSION['Sid']);
+    $edit_query = "SELECT * FROM modeles_cr WHERE id = $id AND professeur_id = $professeur_id";
     $edit_result = mysqli_query($bdd, $edit_query);
     if (mysqli_num_rows($edit_result) > 0) {
         $modele = mysqli_fetch_assoc($edit_result);
@@ -34,7 +36,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_modele'])) {
     $titre = mysqli_real_escape_string($bdd, $_POST['titre']);
     $description = mysqli_real_escape_string($bdd, $_POST['description']);
     $contenu_html = mysqli_real_escape_string($bdd, $_POST['contenu_html']);
-    $professeur_id = $_SESSION['Sid'];
+    $professeur_id = intval($_SESSION['Sid']);
     if (empty($titre)) {
         $error = "Le titre du modèle est obligatoire.";
     } else {
@@ -65,7 +67,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_modele'])) {
         }
     }
 }
-$modeles_query = "SELECT * FROM modeles_cr WHERE professeur_id = {$_SESSION['Sid']} ORDER BY date_creation DESC";
+$professeur_id = intval($_SESSION['Sid']);
+$modeles_query = "SELECT * FROM modeles_cr WHERE professeur_id = $professeur_id ORDER BY date_creation DESC";
 $modeles_result = mysqli_query($bdd, $modeles_query);
 if (isset($_GET['success']) && $_GET['success'] == 1) {
     $message = isset($_GET['edit']) ? "Le modèle a été mis à jour avec succès." : "Le modèle a été créé avec succès.";

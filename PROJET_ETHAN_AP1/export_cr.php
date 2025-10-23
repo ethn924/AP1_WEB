@@ -126,7 +126,7 @@ echo $excel;
 function exportWord($cr, $statut_data) {
     header('Content-Type: application/vnd.openxmlformats-officedocument.wordprocessingml.document');
     header('Content-Disposition: attachment; filename="CR_' . $cr['num'] . '_' . date('Y-m-d') . '.docx"');
-    $word = '<?xml version="1.0" encoding="UTF-8" standalone="yes"<?php';
+    $word = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>';
 $word .= '<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">';
 $word .= '<w:body>';
 $word .= '<w:p><w:pPr><w:pStyle w:val="Heading1"/></w:pPr><w:r><w:t>Compte Rendu de Stage</w:t></w:r></w:p>';

@@ -8,12 +8,13 @@ if (!isset($_SESSION['Sid']) || $_SESSION['Stype'] != 1) {
 }
 $bdd = mysqli_connect($serveurBDD, $userBDD, $mdpBDD, $nomBDD);
 if (!$bdd) { die("Erreur connexion BDD"); }
-$query_groupes = "SELECT * FROM groupes WHERE professeur_responsable_id = {$_SESSION['Sid']} ORDER BY nom";
+$professeur_id = intval($_SESSION['Sid']);
+$query_groupes = "SELECT * FROM groupes WHERE professeur_responsable_id = $professeur_id ORDER BY nom";
 $result_groupes = mysqli_query($bdd, $query_groupes);
 $groupes = array();
 while ($row = mysqli_fetch_assoc($result_groupes)) { $groupes[] = $row; }
 $groupe_id = isset($_GET['groupe_id']) && !empty($_GET['groupe_id']) ? intval($_GET['groupe_id']) : null;
-if ($groupe_id) { $query_check = "SELECT * FROM groupes WHERE id = $groupe_id AND professeur_responsable_id = {$_SESSION['Sid']}";
+if ($groupe_id) { $query_check = "SELECT * FROM groupes WHERE id = $groupe_id AND professeur_responsable_id = $professeur_id";
     $result_check = mysqli_query($bdd, $query_check);
 if (mysqli_num_rows($result_check) == 0) { $groupe_id = null; } }
 $analytics = calculerAnalyticsGroupe($groupe_id);

@@ -21,7 +21,8 @@ $groupe = null;
 // Récupération d'un groupe pour modification
 if (isset($_GET['edit']) && !empty($_GET['edit'])) {
     $groupe_id = intval($_GET['edit']);
-    $query = "SELECT * FROM groupes WHERE id = $groupe_id AND professeur_responsable_id = {$_SESSION['Sid']}";
+    $professeur_id = intval($_SESSION['Sid']);
+    $query = "SELECT * FROM groupes WHERE id = $groupe_id AND professeur_responsable_id = $professeur_id";
     $result = mysqli_query($bdd, $query);
     if (mysqli_num_rows($result) > 0) {
         $groupe = mysqli_fetch_assoc($result);
@@ -31,7 +32,8 @@ if (isset($_GET['edit']) && !empty($_GET['edit'])) {
 // Suppression d'un groupe
 if (isset($_GET['delete']) && !empty($_GET['delete'])) {
     $groupe_id = intval($_GET['delete']);
-    $query = "DELETE FROM groupes WHERE id = $groupe_id AND professeur_responsable_id = {$_SESSION['Sid']}";
+    $professeur_id = intval($_SESSION['Sid']);
+    $query = "DELETE FROM groupes WHERE id = $groupe_id AND professeur_responsable_id = $professeur_id";
     if (mysqli_query($bdd, $query)) {
         $message = "Le groupe a été supprimé avec succès.";
     } else {
@@ -50,8 +52,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_groupe'])) {
         if (isset($_POST['groupe_id']) && !empty($_POST['groupe_id'])) {
             // Modification
             $groupe_id = intval($_POST['groupe_id']);
+            $professeur_id = intval($_SESSION['Sid']);
             $update_query = "UPDATE groupes SET nom = '$nom', description = '$description' 
-                            WHERE id = $groupe_id AND professeur_responsable_id = {$_SESSION['Sid']}";
+                            WHERE id = $groupe_id AND professeur_responsable_id = $professeur_id";
 
             if (mysqli_query($bdd, $update_query)) {
                 $message = "Le groupe a été mis à jour avec succès.";
@@ -62,7 +65,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_groupe'])) {
             }
         } else {
             // Création
-            $professeur_id = $_SESSION['Sid'];
+            $professeur_id = intval($_SESSION['Sid']);
             $insert_query = "INSERT INTO groupes (nom, description, professeur_responsable_id) 
                             VALUES ('$nom', '$description', $professeur_id)";
 

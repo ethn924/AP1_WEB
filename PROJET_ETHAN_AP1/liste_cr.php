@@ -13,17 +13,7 @@ if (!$bdd) {
     die("Erreur connexion BDD");
 }
 
-function formatDateFrench($date) {
-    $english_months = array('January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December');
-    $french_months = array('Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre');
-    
-    $date_str = date('d F Y à H\hi', strtotime($date));
-    $date_str = str_replace($english_months, $french_months, $date_str);
-    
-    return $date_str;
-}
-
-$user_id = $_SESSION['Sid'];
+$user_id = intval($_SESSION['Sid']);
 $query = "SELECT * FROM cr WHERE num_utilisateur = $user_id ORDER BY datetime DESC";
 $result = mysqli_query($bdd, $query);
 

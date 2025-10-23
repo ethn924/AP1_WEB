@@ -42,20 +42,11 @@ WHERE cr.vu = 0
 ORDER BY cr.datetime DESC
 LIMIT 5";
 $cr_non_vus_result = mysqli_query($bdd, $cr_non_vus_query);
+$professeur_id = intval($_SESSION['Sid']);
 $modeles_query = "SELECT * FROM modeles_cr
-WHERE professeur_id = {$_SESSION['Sid']}
+WHERE professeur_id = $professeur_id
 ORDER BY date_creation DESC";
 $modeles_result = mysqli_query($bdd, $modeles_query);
-function formatDateFrench($date)
-{
-    if (!$date)
-        return "Aucun";
-    $english_months = array('January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December');
-    $french_months = array('Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre');
-    $date_str = date('d F Y à H\hi', strtotime($date));
-    $date_str = str_replace($english_months, $french_months, $date_str);
-    return $date_str;
-}
 ?>
 <!DOCTYPE html>
 <html lang="fr">

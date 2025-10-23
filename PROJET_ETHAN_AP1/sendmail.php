@@ -25,8 +25,9 @@ if ($_POST && !empty($_POST['email'])) {
         $user = mysqli_fetch_assoc($res);
 
         $token = bin2hex(random_bytes(32));
+        $token_escape = mysqli_real_escape_string($bdd, $token);
 
-        $update_query = "UPDATE utilisateur SET token='" . trim($token) . "', token_created_at=NOW() WHERE num=" . $user['num'];
+        $update_query = "UPDATE utilisateur SET token='$token_escape', token_created_at=NOW() WHERE num=" . intval($user['num']);
         $update_result = mysqli_query($bdd, $update_query);
 
         if (!$update_result) {

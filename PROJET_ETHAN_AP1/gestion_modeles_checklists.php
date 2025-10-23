@@ -15,7 +15,8 @@ if (!$modele_id) {
     header("Location: gestion_modeles.php");
     exit();
 }
-$query_modele = "SELECT * FROM modeles_cr WHERE id = $modele_id AND professeur_id = {$_SESSION['Sid']}";
+$professeur_id = intval($_SESSION['Sid']);
+$query_modele = "SELECT * FROM modeles_cr WHERE id = $modele_id AND professeur_id = $professeur_id";
 $result_modele = mysqli_query($bdd, $query_modele);
 $modele = mysqli_fetch_assoc($result_modele);
 if (!$modele) {

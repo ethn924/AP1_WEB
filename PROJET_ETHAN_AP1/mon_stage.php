@@ -13,7 +13,7 @@ if (!$bdd) {
     die("Erreur connexion BDD");
 }
 
-$user_id = $_SESSION['Sid'];
+$user_id = intval($_SESSION['Sid']);
 $message = '';
 $error = '';
 
@@ -144,14 +144,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // Vérifier si l'utilisateur a déjà un stage ET un tuteur
             if ($current_data && isset($current_data['num']) && $current_data['num'] && isset($current_data['tuteur_num']) && $current_data['tuteur_num']) {
                 // Mise à jour du tuteur existant
+                $tuteur_num = intval($current_data['tuteur_num']);
                 $update_tuteur = "UPDATE tuteur SET 
                                  nom = '$tuteur_nom', 
                                  prenom = '$tuteur_prenom', 
                                  tel = '$tuteur_tel', 
                                  email = '$tuteur_email' 
-                                 WHERE num = " . $current_data['tuteur_num'];
+                                 WHERE num = $tuteur_num";
 
                 // Mise à jour du stage existant
+                $stage_num = intval($current_data['num']);
                 $update_stage = "UPDATE stage SET 
                                 nom = '$stage_nom', 
                                 adresse = '$stage_adresse', 
@@ -160,7 +162,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 tel = '$stage_tel', 
                                 libelleStage = '$stage_libelle', 
                                 email = '$stage_email' 
-                                WHERE num = " . $current_data['num'];
+                                WHERE num = $stage_num";
 
                 if (mysqli_query($bdd, $update_tuteur) && mysqli_query($bdd, $update_stage)) {
                     mysqli_commit($bdd);

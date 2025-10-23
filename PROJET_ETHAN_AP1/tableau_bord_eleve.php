@@ -10,7 +10,7 @@ $bdd = mysqli_connect($serveurBDD, $userBDD, $mdpBDD, $nomBDD);
 if (!$bdd) {
     die("Erreur connexion BDD");
 }
-$user_id = $_SESSION['Sid'];
+$user_id = intval($_SESSION['Sid']);
 $stats_query = "SELECT
 COUNT(*) as total_cr,
 SUM(CASE WHEN vu = 1 THEN 1 ELSE 0 END) as cr_vus,
@@ -33,16 +33,6 @@ WHERE num_utilisateur = $user_id
 ORDER BY datetime DESC
 LIMIT 5";
 $derniers_cr_result = mysqli_query($bdd, $derniers_cr_query);
-function formatDateFrench($date)
-{
-    if (!$date)
-        return "Aucun";
-    $english_months = array('January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December');
-    $french_months = array('Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre');
-    $date_str = date('d F Y à H\hi', strtotime($date));
-    $date_str = str_replace($english_months, $french_months, $date_str);
-    return $date_str;
-}
 ?>
 <!DOCTYPE html>
 <html lang="fr">

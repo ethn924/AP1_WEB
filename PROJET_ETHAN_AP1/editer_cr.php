@@ -13,35 +13,7 @@ if (!$bdd) {
     die("Erreur connexion BDD");
 }
 
-function formatDateFrench($date) {
-    $english_months = array('January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December');
-    $french_months = array('Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre');
-    
-    $english_days = array('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday');
-    $french_days = array('Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche');
-    
-    $date_str = date('l d F Y', strtotime($date));
-    $date_str = str_replace($english_days, $french_days, $date_str);
-    $date_str = str_replace($english_months, $french_months, $date_str);
-    
-    return $date_str;
-}
-
-function formatDateTimeFrench($datetime) {
-    $english_months = array('January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December');
-    $french_months = array('Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre');
-    
-    $english_days = array('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday');
-    $french_days = array('Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche');
-    
-    $date_str = date('l d F Y à H\hi', strtotime($datetime));
-    $date_str = str_replace($english_days, $french_days, $date_str);
-    $date_str = str_replace($english_months, $french_months, $date_str);
-    
-    return $date_str;
-}
-
-$user_id = $_SESSION['Sid'];
+$user_id = intval($_SESSION['Sid']);
 $message = '';
 $error = '';
 $show_cr_form = false;
@@ -77,17 +49,17 @@ $date_cr = date('Y-m-d');
 $description = '';
 
 if (isset($_POST['show_cr'])) {
-    $date_cr = $_POST['date_cr'];
+    $date_cr = mysqli_real_escape_string($bdd, $_POST['date_cr']);
     $show_cr_list = true;
 }
 
 if (isset($_POST['hide_cr'])) {
-    $date_cr = $_POST['date_cr'];
+    $date_cr = mysqli_real_escape_string($bdd, $_POST['date_cr']);
     $show_cr_list = false;
 }
 
 if (isset($_POST['insérer']) && $show_cr_form) {
-    $date_cr = $_POST['date_cr'];
+    $date_cr = mysqli_real_escape_string($bdd, $_POST['date_cr']);
     $titre = mysqli_real_escape_string($bdd, $_POST['titre']);
     $description = mysqli_real_escape_string($bdd, $_POST['description']);
     $contenu_html = mysqli_real_escape_string($bdd, $_POST['contenu_html']);
@@ -144,7 +116,8 @@ if (isset($_POST['insérer']) && $show_cr_form) {
 
 $liste_cr_result = null;
 if ($show_cr_list) {
-    $liste_cr_query = "SELECT * FROM cr WHERE num_utilisateur = $user_id AND date = '$date_cr' ORDER BY datetime DESC";
+    $date_cr_escaped = mysqli_real_escape_string($bdd, $date_cr);
+    $liste_cr_query = "SELECT * FROM cr WHERE num_utilisateur = $user_id AND date = '$date_cr_escaped' ORDER BY datetime DESC";
     $liste_cr_result = mysqli_query($bdd, $liste_cr_query);
 }
 ?>

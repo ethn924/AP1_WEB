@@ -13,7 +13,7 @@ if (!$bdd) {
     die("Erreur connexion BDD");
 }
 
-$user_id = $_SESSION['Sid'];
+$user_id = intval($_SESSION['Sid']);
 $query = "SELECT * FROM utilisateur WHERE num = $user_id";
 $result = mysqli_query($bdd, $query);
 $user = mysqli_fetch_assoc($result);
@@ -33,7 +33,8 @@ if (isset($_POST['update_password'])) {
         $error = "Les nouveaux mots de passe ne correspondent pas";
         logger("Tentative changement mot de passe échouée - mots de passe différents", $user_id, 'perso.php');
     } else {
-        $update_query = "UPDATE utilisateur SET motdepasse = '$new_password' WHERE num = $user_id";
+        $new_password_escaped = mysqli_real_escape_string($bdd, $new_password);
+        $update_query = "UPDATE utilisateur SET motdepasse = '$new_password_escaped' WHERE num = $user_id";
 
         if (mysqli_query($bdd, $update_query)) {
             $message = "Mot de passe mis à jour avec succès";
@@ -48,8 +49,9 @@ if (isset($_POST['update_password'])) {
 if (isset($_POST['renvoyer_validation'])) {
     // Régénérer le code de vérification
     $code_verification = sprintf("%06d", mt_rand(1, 999999));
+    $code_verification_escaped = mysqli_real_escape_string($bdd, $code_verification);
 
-    $update_query = "UPDATE utilisateur SET code_verification = '$code_verification', email_valide = 0 WHERE num = $user_id";
+    $update_query = "UPDATE utilisateur SET code_verification = '$code_verification_escaped', email_valide = 0 WHERE num = $user_id";
 
     if (mysqli_query($bdd, $update_query)) {
         // Envoi de l'email de vérification

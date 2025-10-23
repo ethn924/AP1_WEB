@@ -42,8 +42,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $error = "Les mots de passe ne correspondent pas";
     } else {
         $md5_hash = md5($password);
+        $md5_hash_escape = mysqli_real_escape_string($bdd, $md5_hash);
 
-        $update_query = "UPDATE utilisateur SET motdepasse = '$md5_hash', token = '', token_created_at = NULL WHERE num = " . $user['num'];
+        $update_query = "UPDATE utilisateur SET motdepasse = '$md5_hash_escape', token = '', token_created_at = NULL WHERE num = " . intval($user['num']);
         $update_result = mysqli_query($bdd, $update_query);
 
         if ($update_result) {

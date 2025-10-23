@@ -13,7 +13,7 @@ if (!$bdd) {
     die("Erreur connexion BDD");
 }
 
-$user_id = $_SESSION['Sid'];
+$user_id = intval($_SESSION['Sid']);
 
 // Marquer toutes comme lues
 if (isset($_POST['tout_marquer_lu'])) {

@@ -8,14 +8,10 @@
 -- Version de PHP : 8.3.14
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
+SET FOREIGN_KEY_CHECKS = 0;
 START TRANSACTION;
 SET time_zone = "+00:00";
-
-
-/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
-/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
-/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
-/*!40101 SET NAMES utf8mb4 */;
+SET NAMES utf8mb4;
 
 --
 -- Base de données : `ap1_ethan_2025`
@@ -63,6 +59,88 @@ CREATE TABLE IF NOT EXISTS `archives_cr` (
   PRIMARY KEY (`id`),
   KEY `cr_id` (`cr_id`),
   KEY `utilisateur_id` (`utilisateur_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Structure de la table `audit_trail`
+--
+
+DROP TABLE IF EXISTS `audit_trail`;
+CREATE TABLE IF NOT EXISTS `audit_trail` (
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `utilisateur_id` int NOT NULL,
+  `action` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `entite` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `entite_id` bigint DEFAULT NULL,
+  `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+  `anciennes_donnees` json DEFAULT NULL,
+  `nouvelles_donnees` json DEFAULT NULL,
+  `adresse_ip` varchar(45) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `user_agent` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+  `date_action` datetime DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `utilisateur_id` (`utilisateur_id`),
+  KEY `action` (`action`),
+  KEY `entite` (`entite`),
+  KEY `entite_id` (`entite_id`),
+  KEY `date_action` (`date_action`),
+  FULLTEXT KEY `description` (`description`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Structure de la table `versions_cr_audit`
+--
+
+DROP TABLE IF EXISTS `versions_cr_audit`;
+CREATE TABLE IF NOT EXISTS `versions_cr_audit` (
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `cr_id` bigint NOT NULL,
+  `numero_version` int NOT NULL,
+  `titre` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+  `contenu_html` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+  `utilisateur_id` int NOT NULL,
+  `date_creation` datetime DEFAULT CURRENT_TIMESTAMP,
+  `note_version` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+  `type_modification` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT 'modification',
+  `nb_caracteres_ajoutes` int DEFAULT '0',
+  `nb_caracteres_supprimes` int DEFAULT '0',
+  `taille_fichier` int DEFAULT NULL,
+  `restaurable` tinyint(1) DEFAULT '1',
+  PRIMARY KEY (`id`),
+  KEY `cr_id` (`cr_id`),
+  KEY `utilisateur_id` (`utilisateur_id`),
+  KEY `date_creation` (`date_creation`),
+  KEY `numero_version` (`numero_version`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Structure de la table `audit_export`
+--
+
+DROP TABLE IF EXISTS `audit_export`;
+CREATE TABLE IF NOT EXISTS `audit_export` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `utilisateur_id` int NOT NULL,
+  `nom_fichier` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `type_export` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT 'pdf',
+  `date_debut` date DEFAULT NULL,
+  `date_fin` date DEFAULT NULL,
+  `filtres` json DEFAULT NULL,
+  `nombre_enregistrements` int DEFAULT '0',
+  `chemin_fichier` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `date_export` datetime DEFAULT CURRENT_TIMESTAMP,
+  `date_suppression` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `utilisateur_id` (`utilisateur_id`),
+  KEY `date_export` (`date_export`),
+  KEY `type_export` (`type_export`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -469,6 +547,25 @@ ALTER TABLE `archives_cr`
   ADD CONSTRAINT `archives_cr_ibfk_2` FOREIGN KEY (`utilisateur_id`) REFERENCES `utilisateur` (`num`) ON DELETE CASCADE;
 
 --
+-- Contraintes pour la table `audit_trail`
+--
+ALTER TABLE `audit_trail`
+  ADD CONSTRAINT `audit_trail_ibfk_1` FOREIGN KEY (`utilisateur_id`) REFERENCES `utilisateur` (`num`) ON DELETE CASCADE;
+
+--
+-- Contraintes pour la table `versions_cr_audit`
+--
+ALTER TABLE `versions_cr_audit`
+  ADD CONSTRAINT `versions_cr_audit_ibfk_1` FOREIGN KEY (`cr_id`) REFERENCES `cr` (`num`) ON DELETE CASCADE,
+  ADD CONSTRAINT `versions_cr_audit_ibfk_2` FOREIGN KEY (`utilisateur_id`) REFERENCES `utilisateur` (`num`) ON DELETE CASCADE;
+
+--
+-- Contraintes pour la table `audit_export`
+--
+ALTER TABLE `audit_export`
+  ADD CONSTRAINT `audit_export_ibfk_1` FOREIGN KEY (`utilisateur_id`) REFERENCES `utilisateur` (`num`) ON DELETE CASCADE;
+
+--
 -- Contraintes pour la table `checklists_modeles`
 --
 ALTER TABLE `checklists_modeles`
@@ -552,8 +649,6 @@ ALTER TABLE `validations_cr`
 ALTER TABLE `versions_cr`
   ADD CONSTRAINT `versions_cr_ibfk_1` FOREIGN KEY (`cr_id`) REFERENCES `cr` (`num`) ON DELETE CASCADE,
   ADD CONSTRAINT `versions_cr_ibfk_2` FOREIGN KEY (`utilisateur_id`) REFERENCES `utilisateur` (`num`) ON DELETE CASCADE;
-COMMIT;
 
-/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
-/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
-/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
+COMMIT;
+SET FOREIGN_KEY_CHECKS = 1;

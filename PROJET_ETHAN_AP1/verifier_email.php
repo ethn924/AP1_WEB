@@ -41,8 +41,9 @@ if (isset($_SESSION['user_id_verification']) && isset($_SESSION['email_verificat
 // Envoi du code de vérification
 if (isset($_POST['envoyer_code'])) {
     $code_verification = sprintf("%06d", mt_rand(1, 999999));
+    $code_verification_escape = mysqli_real_escape_string($bdd, $code_verification);
 
-    $update_query = "UPDATE utilisateur SET code_verification = '$code_verification' WHERE num = $user_id";
+    $update_query = "UPDATE utilisateur SET code_verification = '$code_verification_escape' WHERE num = $user_id";
 
     if (mysqli_query($bdd, $update_query)) {
         // Envoi de l'email de vérification avec PHPMailer

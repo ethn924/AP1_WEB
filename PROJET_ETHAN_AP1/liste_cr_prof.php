@@ -3,17 +3,6 @@ session_start();
 include '_conf.php';
 include 'fonctions.php';
 
-function formatDateFrench($date)
-{
-    $english_months = array('January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December');
-    $french_months = array('Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre');
-
-    $date_str = date('d F Y à H\hi', strtotime($date));
-    $date_str = str_replace($english_months, $french_months, $date_str);
-
-    return $date_str;
-}
-
 if (!isset($_SESSION['Sid']) || $_SESSION['Stype'] != 1) {
     header("Location: index.php");
     exit();
@@ -48,10 +37,14 @@ if (isset($_POST['update_vu'])) {
         $redirect_url = "liste_cr_prof.php";
         $params = array();
 
-        if (isset($_GET['sort']))
-            $params[] = 'sort=' . $_GET['sort'];
+        if (isset($_GET['sort'])) {
+            $allowed_sorts = ['eleve', 'date_asc', 'date_desc', 'vu', 'non_vu'];
+            if (in_array($_GET['sort'], $allowed_sorts)) {
+                $params[] = 'sort=' . $_GET['sort'];
+            }
+        }
         if (isset($_GET['eleve']))
-            $params[] = 'eleve=' . $_GET['eleve'];
+            $params[] = 'eleve=' . intval($_GET['eleve']);
         if (isset($_GET['search']))
             $params[] = 'search=' . urlencode($_GET['search']);
 

@@ -12,7 +12,8 @@ if (!$bdd) {
 }
 $message = '';
 $error = '';
-$query_groupes = "SELECT * FROM groupes WHERE professeur_responsable_id = {$_SESSION['Sid']} AND actif = 1 ORDER BY nom";
+$professeur_id = intval($_SESSION['Sid']);
+$query_groupes = "SELECT * FROM groupes WHERE professeur_responsable_id = $professeur_id AND actif = 1 ORDER BY nom";
 $result_groupes = mysqli_query($bdd, $query_groupes);
 $groupes = array();
 while ($row = mysqli_fetch_assoc($result_groupes)) {
@@ -35,7 +36,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_rappel'])) {
 }
 if (isset($_GET['delete']) && !empty($_GET['delete'])) {
     $rappel_id = intval($_GET['delete']);
-    $query = "DELETE FROM rappels_soumission WHERE id = $rappel_id AND professeur_id = {$_SESSION['Sid']}";
+    $prof_id = intval($_SESSION['Sid']);
+    $query = "DELETE FROM rappels_soumission WHERE id = $rappel_id AND professeur_id = $prof_id";
     if (mysqli_query($bdd, $query)) {
         $message = "Le rappel a été supprimé avec succès.";
     } else {
@@ -44,16 +46,18 @@ if (isset($_GET['delete']) && !empty($_GET['delete'])) {
 }
 if (isset($_GET['deactivate']) && !empty($_GET['deactivate'])) {
     $rappel_id = intval($_GET['deactivate']);
-    $query = "UPDATE rappels_soumission SET actif = 0 WHERE id = $rappel_id AND professeur_id = {$_SESSION['Sid']}";
+    $prof_id = intval($_SESSION['Sid']);
+    $query = "UPDATE rappels_soumission SET actif = 0 WHERE id = $rappel_id AND professeur_id = $prof_id";
     if (mysqli_query($bdd, $query)) {
         $message = "Le rappel a été désactivé.";
     } else {
         $error = "Erreur lors de la désactivation du rappel.";
     }
 }
+$prof_id = intval($_SESSION['Sid']);
 $query_rappels = "SELECT r.*, g.nom as groupe_nom FROM rappels_soumission r
 JOIN groupes g ON r.groupe_id = g.id
-WHERE r.professeur_id = {$_SESSION['Sid']}
+WHERE r.professeur_id = $prof_id
 ORDER BY r.date_limite DESC";
 $result_rappels = mysqli_query($bdd, $query_rappels);
 $rappels = array();

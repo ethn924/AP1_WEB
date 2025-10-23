@@ -42,10 +42,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } else {
             // Génération du code de vérification
             $code_verification = sprintf("%06d", mt_rand(1, 999999));
+            $code_verification_escape = mysqli_real_escape_string($bdd, $code_verification);
 
             // Insertion du nouvel utilisateur
             $insert_query = "INSERT INTO utilisateur (nom, prenom, login, email, motdepasse, type, code_verification) 
-                            VALUES ('$nom', '$prenom', '$login', '$email', '$motdepasse', $type, '$code_verification')";
+                            VALUES ('$nom', '$prenom', '$login', '$email', '$motdepasse', $type, '$code_verification_escape')";
 
             if (mysqli_query($bdd, $insert_query)) {
                 $user_id = mysqli_insert_id($bdd);
